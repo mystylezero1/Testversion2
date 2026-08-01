@@ -1,22 +1,28 @@
-// Admin Konsole Steuerung
+// Admin Konsole Steuerung - Vollständiger Code
 
 document.addEventListener("DOMContentLoaded", () => {
   initAdminEvents();
 });
 
 function initAdminEvents() {
-  // 1. Admin Button Klick (Passwortabfrage & Tabelle laden)
+  // 1. Admin Button Klick & Passwortabfrage
   const adminBtn = document.getElementById("adminOpenBtn");
   const adminModal = document.getElementById("adminModal");
 
   if (adminBtn && adminModal) {
     adminBtn.addEventListener("click", () => {
       const pass = prompt("Bitte Admin-Passwort eingeben:");
-      const validPass = (typeof CONFIG !== "undefined" && CONFIG.adminPassword) ? CONFIG.adminPassword : "admin";
       
-      if (pass === validPass) {
+      // Liest Passwort aus config.js ODER nutzt "admin" als Fallback
+      let validPass = "admin";
+      if (typeof CONFIG !== "undefined") {
+        validPass = CONFIG.adminPassword || CONFIG.password || CONFIG.pass || validPass;
+      }
+
+      // Groß-/Kleinschreibung und Leerzeichen werden ignoriert
+      if (pass !== null && pass.trim().toLowerCase() === String(validPass).trim().toLowerCase()) {
         adminModal.classList.remove("hidden");
-        renderAdminTabelle(); // Tabelle beim Öffnen sofort befüllen
+        renderAdminTabelle(); // Tabelle beim Öffnen befüllen
       } else if (pass !== null) {
         alert("Falsches Passwort!");
       }
