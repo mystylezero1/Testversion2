@@ -1,20 +1,25 @@
-// Admin Konsole Steuerung (Sicher gegen doppelte Passwort-Prompts)
+// Admin Konsole Steuerung - Vollständiger & Bereinigter Code
 
 document.addEventListener("DOMContentLoaded", () => {
   initAdminEvents();
 });
 
 function initAdminEvents() {
-  const adminBtn = document.getElementById("adminOpenBtn");
+  const oldBtn = document.getElementById("adminOpenBtn");
   const adminModal = document.getElementById("adminModal");
 
-  // 1. Admin Button (onclick verhindert doppelte Listener)
-  if (adminBtn && adminModal) {
-    adminBtn.onclick = (e) => {
+  if (oldBtn && adminModal) {
+    // 1. BUTTON-RESET: Klont den Button, um alle doppelten Event-Listener aus app.js zu löschen
+    const adminBtn = oldBtn.cloneNode(true);
+    oldBtn.parentNode.replaceChild(adminBtn, oldBtn);
+
+    // 2. Passwortabfrage (wird garantiert nur noch einmal ausgeführt)
+    adminBtn.addEventListener("click", (e) => {
       e.preventDefault();
-      
+      e.stopPropagation();
+
       const pass = prompt("Bitte Admin-Passwort eingeben:");
-      if (pass === null) return; // Beenden bei "Abbrechen"
+      if (pass === null) return; // Abgebrochen
 
       // Liest Passwort aus config.js ODER nutzt "admin" als Fallback
       let validPass = "admin";
@@ -29,10 +34,10 @@ function initAdminEvents() {
       } else {
         alert("Falsches Passwort!");
       }
-    };
+    });
   }
 
-  // 2. Modal Schließen (Klick auf 'X' oder Schließen-Button)
+  // 3. Modal Schließen (Klick auf 'X' oder Schließen-Button)
   const closeBtns = document.querySelectorAll("#adminModal .close, #adminModal .close-btn, #adminModal .modal-close");
   closeBtns.forEach(btn => {
     btn.onclick = () => {
@@ -40,7 +45,7 @@ function initAdminEvents() {
     };
   });
 
-  // 3. Klapp-Menüs (Accordion) für "+ Neuen Gast anlegen" etc.
+  // 4. Klapp-Menüs (Accordion) für "+ Neuen Gast anlegen" etc.
   const accordionBtns = document.querySelectorAll(".admin-accordion-btn");
   accordionBtns.forEach(btn => {
     btn.onclick = function() {
@@ -58,7 +63,7 @@ function initAdminEvents() {
     };
   });
 
-  // 4. Gast hinzufügen Formular
+  // 5. Gast hinzufügen Formular
   const addForm = document.getElementById("addGastForm");
   if (addForm) {
     addForm.onsubmit = (e) => {
@@ -67,11 +72,11 @@ function initAdminEvents() {
     };
   }
 
-  // 5. JSON Exportieren
+  // 6. JSON Exportieren Button
   const exportBtn = document.getElementById("exportJsonBtn");
   if (exportBtn) exportBtn.onclick = exportiereJSON;
 
-  // 6. Saalplan Drucken
+  // 7. Saalplan Drucken Button
   const druckenBtn = document.getElementById("druckenBtn");
   if (druckenBtn) {
     druckenBtn.onclick = () => window.print();
