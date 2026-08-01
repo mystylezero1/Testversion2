@@ -1,0 +1,18 @@
+[
+  {"tisch": "Braut", "platz": 1, "name": "Anne", "isKind": false},
+  {"tisch": "Braut", "platz": 2, "name": "Felix", "isKind": false},
+  {"tisch": "Braut", "platz": 3, "name": "Dino", "isKind": false},
+  {"tisch": "Braut", "platz": 4, "name": "Gast 4", "isKind": false},
+  {"tisch": "Braut", "platz": 5, "name": "Gast 5", "isKind": false},
+  {"tisch": "Braut", "platz": 6, "name": "Anja", "isKind": false},
+  {"tisch": "Braut", "platz": 7, "name": "Dani", "isKind": false},
+  {"tisch": "Braut", "platz": 8, "name": "", "isKind": false},
+  {"tisch": "Braut", "platz": 9, "name": "Günther", "isKind": false},
+  {"tisch": "Braut", "platz": 10, "name": "Erika", "isKind": false},
+  {"tisch": "Braut", "platz": 11, "name": "Brigitte", "isKind": false},
+  {"tisch": "Braut", "platz": 12, "name": "Peter", "isKind": false},
+  {"tisch": "Braut", "platz": 13, "name": "Ingrid", "isKind": false},
+  {"tisch": "Braut", "platz": 14, "name": "Roswitha", "isKind": false},
+  {"tisch": 16, "platz": 116, "name": "Marie", "isKind": false},
+  {"tisch": 16, "platz": 117, "name": "Anton", "isKind": true}
+]
