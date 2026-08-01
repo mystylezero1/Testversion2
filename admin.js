@@ -1,4 +1,4 @@
-// Admin Konsole Steuerung (Nutzt das HTML-Modal aus der index.html)
+// Admin Konsole Steuerung - Präzise HTML-Modal Steuerung
 
 document.addEventListener("DOMContentLoaded", () => {
   initAdminEvents();
@@ -19,18 +19,33 @@ function initAdminEvents() {
     };
   }
 
-  // 2. Modal Schließen (Klick auf 'X')
+  // 2. Modal Schließen (Klick auf 'X' oder Schließen-Buttons)
   const closeBtns = adminModal.querySelectorAll(".close, .close-btn, .modal-close");
   closeBtns.forEach(btn => {
-    btn.onclick = () => {
+    btn.onclick = (e) => {
+      e.preventDefault();
       adminModal.classList.add("hidden");
       adminModal.style.display = "none";
     };
   });
 
-  // 3. Passwortabfrage über das HTML-Eingabefeld
-  const passInput = adminModal.querySelector("input[type='password']") || adminModal.querySelector("input");
-  const loginBtn = adminModal.querySelector("button") || document.getElementById("adminLoginBtn");
+  // 3. Elemente im Login-Bereich präzise finden
+  // Passwort-Feld suchen (sucht erst nach Passwords, sonst nach erstem Input)
+  const passInput = adminModal.querySelector("#adminPassword, #adminPass, #passInput, input[type='password']") 
+                    || adminModal.querySelector("input");
+
+  // Login-Button gezielt suchen (schließt den 'X'-Button explizit aus)
+  const loginBtn = adminModal.querySelector("#adminLoginBtn, #loginBtn, .btn-login") 
+                   || Array.from(adminModal.querySelectorAll("button")).find(b => 
+                      !b.classList.contains("close") && 
+                      !b.classList.contains("close-btn") && 
+                      b.textContent.trim().toLowerCase().includes("anmelden")
+                   )
+                   || adminModal.querySelector("form button");
+
+  // Login-Container und Haupt-Admin-Bereich ermitteln
+  const loginArea = adminModal.querySelector(".admin-login-area, #adminLoginArea, form") 
+                    || (passInput ? passInput.closest("div:not(#adminModal)") : null);
 
   function pruefePasswort() {
     if (!passInput) return;
@@ -38,29 +53,38 @@ function initAdminEvents() {
 
     // Liest Passwort aus config.js ODER nutzt "admin" als Fallback
     let validPass = "admin";
-    if (typeof CONFIG !== "undefined") {
+    if (typeof CONFIG !== "undefined" && CONFIG) {
       validPass = CONFIG.adminPassword || CONFIG.password || CONFIG.pass || validPass;
     }
 
-    if (pass.trim().toLowerCase() === String(validPass).trim().toLowerCase()) {
-      // Login erfolgreich: Zeige Admin-Inhalte (Tabelle etc.)
-      const loginArea = adminModal.querySelector(".admin-login-area") || passInput.parentElement;
-      const adminContent = adminModal.querySelector(".admin-content-area") || document.getElementById("adminContent");
+    const eingabe = pass.trim();
+    const sollPass = String(validPass).trim();
 
-      if (loginArea && adminContent) {
+    // Passwort-Vergleich (sowohl exakt als auch schreibweisen-tolerant)
+    if (eingabe === sollPass || eingabe.toLowerCase() === sollPass.toLowerCase()) {
+      // Login erfolgreich: Login-Eingabe ausblenden
+      if (loginArea) {
         loginArea.style.display = "none";
-        adminContent.style.display = "block";
-        adminContent.classList.remove("hidden");
+        loginArea.classList.add("hidden");
       }
 
+      // Admin-Inhalte (Gästeliste, Tabelle, Export) einblenden
+      const hiddenAdminElements = adminModal.querySelectorAll(".admin-accordion-btn, table, .admin-footer, #adminGaesteTbody, .admin-content-area, #adminContentArea");
+      hiddenAdminElements.forEach(el => {
+        el.style.display = "";
+        el.classList.remove("hidden");
+      });
+
+      // Tabelle rendern
       renderAdminTabelle();
     } else {
       alert("Falsches Passwort!");
       passInput.value = "";
+      passInput.focus();
     }
   }
 
-  // Klick auf "Anmelden"-Button
+  // Klick auf den Anmelden-Button
   if (loginBtn) {
     loginBtn.onclick = (e) => {
       e.preventDefault();
@@ -68,7 +92,16 @@ function initAdminEvents() {
     };
   }
 
-  // Bestätigung per Enter-Taste im Passwort-Feld
+  // Formular-Absenden abfangen (falls Anmelden in einem <form> liegt)
+  const loginForm = adminModal.querySelector("form");
+  if (loginForm) {
+    loginForm.onsubmit = (e) => {
+      e.preventDefault();
+      pruefePasswort();
+    };
+  }
+
+  // Enter-Taste im Passwort-Feld abfangen
   if (passInput) {
     passInput.onkeydown = (e) => {
       if (e.key === "Enter") {
@@ -78,8 +111,8 @@ function initAdminEvents() {
     };
   }
 
-  // 4. Klapp-Menüs (Accordion)
-  const accordionBtns = document.querySelectorAll(".admin-accordion-btn");
+  // 4. Klapp-Menüs (Accordion) für "+ Neuen Gast anlegen" etc.
+  const accordionBtns = adminModal.querySelectorAll(".admin-accordion-btn");
   accordionBtns.forEach(btn => {
     btn.onclick = function() {
       this.classList.toggle("active");
@@ -99,15 +132,18 @@ function initAdminEvents() {
     };
   }
 
-  // 6. Export & Drucken Buttons
+  // 6. JSON Exportieren Button
   const exportBtn = document.getElementById("exportJsonBtn");
   if (exportBtn) exportBtn.onclick = exportiereJSON;
 
+  // 7. Saalplan Drucken Button
   const druckenBtn = document.getElementById("druckenBtn");
-  if (druckenBtn) druckenBtn.onclick = () => window.print();
+  if (druckenBtn) {
+    druckenBtn.onclick = () => window.print();
+  }
 }
 
-// Rendert die Admin-Tabelle dynamisch
+// Rendert die Admin-Tabelle dynamisch neu
 function renderAdminTabelle() {
   const tbody = document.getElementById("adminGaesteTbody");
   if (!tbody) return;
@@ -171,7 +207,7 @@ function gastLoeschen(index) {
   }
 }
 
-// JSON exportieren
+// JSON Datei exportieren
 function exportiereJSON() {
   const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(gaeste, null, 2));
   const downloadAnchor = document.createElement("a");
