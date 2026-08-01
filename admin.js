@@ -1,4 +1,4 @@
-// Admin Konsole Steuerung - Vollständige & Funktionierende Lösung
+// Admin Konsole Steuerung - Vollständige Korrektur für Buttons & Saalplan-Druck
 
 document.addEventListener("DOMContentLoaded", () => {
   initAdminEvents();
@@ -74,14 +74,15 @@ function initAdminEvents() {
         }
       });
 
-      // Alle unsichtbaren Admin-Bereiche freischalten
-      const hiddenElements = adminModal.querySelectorAll(".hidden, [style*='display: none'], [style*='display:none']");
-      hiddenElements.forEach(el => {
-        if (el !== passInput && el !== loginBtn && !el.textContent.includes("Passwort")) {
-          el.classList.remove("hidden");
-          el.style.display = "block";
-        }
+      // Admin-Hauptbereiche sichtbar machen
+      const hiddenAdminAreas = adminModal.querySelectorAll(".admin-content, .admin-body, #adminContentArea, .admin-main");
+      hiddenAdminAreas.forEach(area => {
+        area.classList.remove("hidden");
+        area.style.display = "block";
       });
+
+      // Klapp-Menüs einrichten
+      setupAccordions(adminModal);
 
       // Tabelle initial rendern
       renderAdminTabelle();
@@ -110,10 +111,7 @@ function initAdminEvents() {
     };
   }
 
-  // 4. Akkordeon & Klapp-Menüs ("Gästeliste", "Aktionen & Export", "+ Neuen Gast anlegen")
-  setupAccordions(adminModal);
-
-  // 5. Gast hinzufügen Formular
+  // 4. Gast hinzufügen Formular
   const addForm = document.getElementById("addGastForm");
   if (addForm) {
     addForm.onsubmit = (e) => {
@@ -122,52 +120,66 @@ function initAdminEvents() {
     };
   }
 
-  // 6. Aktion-Buttons: JSON Exportieren & Saalplan Drucken
+  // 5. Drucken- & Export-Buttons aktivieren
   setupActionButtons(adminModal);
 }
 
-// Akkordeon-Funktionalität
+// Akkordeon-Funktionalität für "Gästeliste", "Aktionen & Export", "+ Neuen Gast anlegen"
 function setupAccordions(modal) {
-  const accBtns = modal.querySelectorAll(".admin-accordion-btn, .accordion-btn, .accordion");
-  
-  accBtns.forEach(btn => {
+  const allBtns = Array.from(modal.querySelectorAll("button, .accordion, .accordion-btn, .admin-accordion-btn"));
+
+  // Nur die 3 oberen Hauptmenü-Buttons filtern
+  const menuBtns = allBtns.filter(btn => {
+    const txt = btn.textContent.trim().toLowerCase();
+    const isClose = btn.classList.contains("close") || btn.classList.contains("close-btn") || txt === "x" || txt === "×";
+    const isAction = btn.id === "exportJsonBtn" || btn.id === "printPlanBtn" || txt.includes("löschen") || txt.includes("anmelden");
+    return !isClose && !isAction;
+  });
+
+  menuBtns.forEach(btn => {
     btn.onclick = function(e) {
       e.preventDefault();
-      this.classList.toggle("active");
+      e.stopPropagation();
 
-      let panel = this.nextElementSibling;
+      const txt = this.textContent.trim().toLowerCase();
+      let targetPanel = null;
 
-      if (!panel && this.getAttribute("data-target")) {
-        panel = modal.querySelector(this.getAttribute("data-target"));
+      // Zuweisung des Ziel-Panels anhand des Textes
+      if (txt.includes("liste") || txt.includes("gästeliste")) {
+        targetPanel = modal.querySelector("#gaesteTabelleTab, .gaeste-table-panel, table")?.closest("div") || modal.querySelector("table");
+      } else if (txt.includes("aktion") || txt.includes("export")) {
+        targetPanel = modal.querySelector("#actionsTab, .actions-tab, .admin-actions-grid")?.closest("div") || modal.querySelector("#actionsTab");
+      } else if (txt.includes("gast") || txt.includes("anlegen")) {
+        targetPanel = modal.querySelector("#addGastTab, #addGastForm, .add-gast-panel") || modal.querySelector("form");
       }
 
-      if (!panel) {
-        const text = this.textContent.toLowerCase();
-        if (text.includes("aktion")) panel = modal.querySelector("#actionsTab, .actions-tab");
-        else if (text.includes("gast")) panel = modal.querySelector("#addGastTab, #addGastForm, .add-gast-panel");
-        else if (text.includes("liste")) panel = modal.querySelector("#gaesteTabelleTab, .gaeste-table-panel, table");
+      if (!targetPanel && this.nextElementSibling) {
+        targetPanel = this.nextElementSibling;
       }
 
-      if (panel) {
-        const currentDisplay = window.getComputedStyle(panel).display;
-        if (currentDisplay === "none" || panel.classList.contains("hidden")) {
-          panel.style.display = "block";
-          panel.classList.remove("hidden");
+      // Auf- und Zuklappen
+      if (targetPanel) {
+        this.classList.toggle("active");
+        const isHidden = targetPanel.style.display === "none" || targetPanel.classList.contains("hidden") || window.getComputedStyle(targetPanel).display === "none";
+        
+        if (isHidden) {
+          targetPanel.style.display = "block";
+          targetPanel.classList.remove("hidden");
         } else {
-          panel.style.display = "none";
+          targetPanel.style.display = "none";
         }
       }
     };
   });
 }
 
-// Buttons für Drucken & Export einrichten
+// Drucken & Exportieren Buttons
 function setupActionButtons(modal) {
   const printBtns = modal.querySelectorAll("#printPlanBtn, #printBtn, #druckenBtn, .btn-print");
   printBtns.forEach(btn => {
     btn.onclick = (e) => {
       e.preventDefault();
-      window.print();
+      saalplanDrucken(modal);
     };
   });
 
@@ -178,17 +190,20 @@ function setupActionButtons(modal) {
       exportiereJSON();
     };
   });
+}
 
-  const allModalBtns = modal.querySelectorAll("button");
-  allModalBtns.forEach(btn => {
-    const txt = btn.textContent.toLowerCase();
-    if (txt.includes("drucken") && !btn.onclick) {
-      btn.onclick = (e) => { e.preventDefault(); window.print(); };
+// Saalplan drucken: Blendet das Modal kurz aus, damit nur der Saalplan gedruckt wird
+function saalplanDrucken(modal) {
+  if (modal) {
+    modal.style.display = "none";
+  }
+
+  setTimeout(() => {
+    window.print();
+    if (modal) {
+      modal.style.display = "flex";
     }
-    if (txt.includes("exportieren") && !btn.onclick) {
-      btn.onclick = (e) => { e.preventDefault(); exportiereJSON(); };
-    }
-  });
+  }, 150);
 }
 
 // Rendert die Admin-Tabelle
