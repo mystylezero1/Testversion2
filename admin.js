@@ -1,4 +1,4 @@
-// Admin Konsole Steuerung - Vollständige Korrektur für Buttons & Saalplan-Druck
+// Admin Konsole Steuerung - Optimierte Version (Saalplan-Druck & Passwort-Handling)
 
 document.addEventListener("DOMContentLoaded", () => {
   initAdminEvents();
@@ -18,7 +18,10 @@ function initAdminEvents() {
       adminModal.style.display = "flex";
 
       const passInput = findPassInput(adminModal);
-      if (passInput) passInput.focus();
+      if (passInput) {
+        passInput.value = "";
+        passInput.focus();
+      }
     };
   }
 
@@ -51,14 +54,11 @@ function initAdminEvents() {
   // 3. Login-Prüfung & Admin-Bereich freischalten
   function pruefePasswort() {
     const passInput = findPassInput(adminModal);
-    const eingabe = passInput ? passInput.value.trim() : "";
+    const eingabe = passInput ? passInput.value.trim().toLowerCase() : "";
 
-    const istKorrekt = (
-      eingabe.toLowerCase() === "admin" ||
-      eingabe.toLowerCase() === "1234" ||
-      eingabe.toLowerCase() === "hochzeit" ||
-      eingabe === ""
-    );
+    // Gültige Passwörter
+    const gueltigePasswoerter = ["admin", "1234", "hochzeit", "anja", "dino", ""];
+    const istKorrekt = gueltigePasswoerter.includes(eingabe);
 
     if (istKorrekt) {
       // Login-Elemente ausblenden
@@ -81,13 +81,13 @@ function initAdminEvents() {
         area.style.display = "block";
       });
 
-      // Klapp-Menüs einrichten
+      // Klapp-Menüs aktivieren
       setupAccordions(adminModal);
 
-      // Tabelle initial rendern
+      // Tabelle rendern
       renderAdminTabelle();
     } else {
-      alert("Falsches Passwort!");
+      alert("Falsches Passwort! Gültige Passwörter: admin, 1234, hochzeit, anja, dino (oder einfach leer lassen).");
       if (passInput) passInput.value = "";
     }
   }
@@ -111,7 +111,7 @@ function initAdminEvents() {
     };
   }
 
-  // 4. Gast hinzufügen Formular
+  // 4. Formular zum Hinzufügen von Gästen
   const addForm = document.getElementById("addGastForm");
   if (addForm) {
     addForm.onsubmit = (e) => {
@@ -120,15 +120,14 @@ function initAdminEvents() {
     };
   }
 
-  // 5. Drucken- & Export-Buttons aktivieren
+  // 5. Drucken- & Export-Buttons einrichten
   setupActionButtons(adminModal);
 }
 
-// Akkordeon-Funktionalität für "Gästeliste", "Aktionen & Export", "+ Neuen Gast anlegen"
+// Akkordeon-Steuerung für "Gästeliste", "Aktionen & Export", "+ Neuen Gast anlegen"
 function setupAccordions(modal) {
   const allBtns = Array.from(modal.querySelectorAll("button, .accordion, .accordion-btn, .admin-accordion-btn"));
 
-  // Nur die 3 oberen Hauptmenü-Buttons filtern
   const menuBtns = allBtns.filter(btn => {
     const txt = btn.textContent.trim().toLowerCase();
     const isClose = btn.classList.contains("close") || btn.classList.contains("close-btn") || txt === "x" || txt === "×";
@@ -144,7 +143,6 @@ function setupAccordions(modal) {
       const txt = this.textContent.trim().toLowerCase();
       let targetPanel = null;
 
-      // Zuweisung des Ziel-Panels anhand des Textes
       if (txt.includes("liste") || txt.includes("gästeliste")) {
         targetPanel = modal.querySelector("#gaesteTabelleTab, .gaeste-table-panel, table")?.closest("div") || modal.querySelector("table");
       } else if (txt.includes("aktion") || txt.includes("export")) {
@@ -157,7 +155,6 @@ function setupAccordions(modal) {
         targetPanel = this.nextElementSibling;
       }
 
-      // Auf- und Zuklappen
       if (targetPanel) {
         this.classList.toggle("active");
         const isHidden = targetPanel.style.display === "none" || targetPanel.classList.contains("hidden") || window.getComputedStyle(targetPanel).display === "none";
@@ -192,7 +189,7 @@ function setupActionButtons(modal) {
   });
 }
 
-// Saalplan drucken: Blendet das Modal kurz aus, damit nur der Saalplan gedruckt wird
+// Saalplan drucken: Ausblenden des Modals vor dem Druck
 function saalplanDrucken(modal) {
   if (modal) {
     modal.style.display = "none";
@@ -203,10 +200,23 @@ function saalplanDrucken(modal) {
     if (modal) {
       modal.style.display = "flex";
     }
-  }, 150);
+  }, 200);
 }
 
-// Rendert die Admin-Tabelle
+// Automatisches Verstecken des Modals beim Auslösen des Druckdialogs
+window.addEventListener("beforeprint", () => {
+  const adminModal = document.getElementById("adminModal");
+  if (adminModal) adminModal.style.display = "none";
+});
+
+window.addEventListener("afterprint", () => {
+  const adminModal = document.getElementById("adminModal");
+  if (adminModal && !adminModal.classList.contains("hidden")) {
+    adminModal.style.display = "flex";
+  }
+});
+
+// Admin-Tabelle rendern
 function renderAdminTabelle() {
   const tbody = document.getElementById("adminGaesteTbody");
   if (!tbody) return;
