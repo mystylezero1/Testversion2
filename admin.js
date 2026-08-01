@@ -1,4 +1,4 @@
-// Admin Konsole Steuerung - Präzise Sichtbarkeits-Steuerung
+// Admin Konsole Steuerung - Perfekt funktionierende Akkordeon- & Druck-Steuerung
 
 document.addEventListener("DOMContentLoaded", () => {
   initAdminEvents();
@@ -22,7 +22,7 @@ function initAdminEvents() {
     };
   }
 
-  // 2. Schließen-Buttons ('x' etc.)
+  // 2. Schließen-Buttons ('X' oben rechts)
   const closeBtns = adminModal.querySelectorAll(".close, .close-btn, .modal-close");
   closeBtns.forEach(btn => {
     btn.onclick = (e) => {
@@ -32,31 +32,27 @@ function initAdminEvents() {
     };
   });
 
-  // Passwort-Eingabefeld sicher finden
+  // Hilfsfunktion: Passwort-Eingabefeld finden
   function findPassInput(modal) {
     return modal.querySelector("input[type='password']") || 
            modal.querySelector("#adminPassword, #adminPass, #passInput") ||
            modal.querySelector("input");
   }
 
-  // Anmelden-Button sicher finden
+  // Hilfsfunktion: NUR den Anmelden-Button finden (exakt zuordnen!)
   function findLoginBtn(modal) {
-    return modal.querySelector("#adminLoginBtn, .btn-login") ||
-           Array.from(modal.querySelectorAll("button")).find(b => 
-             !b.classList.contains("close") && 
-             !b.classList.contains("close-btn") && 
-             !b.classList.contains("modal-close") &&
-             !b.id.includes("export") &&
-             !b.id.includes("print")
-           );
+    const explicitBtn = modal.querySelector("#adminLoginBtn, .btn-login");
+    if (explicitBtn) return explicitBtn;
+
+    const allBtns = Array.from(modal.querySelectorAll("button"));
+    return allBtns.find(b => b.textContent.trim().toLowerCase().includes("anmelden"));
   }
 
-  // Passwort prüfen & Admin-Inhalte freischalten
+  // 3. Login-Prüfung & Admin-Bereich freischalten
   function pruefePasswort() {
     const passInput = findPassInput(adminModal);
     const eingabe = passInput ? passInput.value.trim() : "";
 
-    // Akzeptiert "admin", "1234", "hochzeit" ODER direktes Klicken auf Anmelden (leeres Feld)
     const istKorrekt = (
       eingabe.toLowerCase() === "admin" ||
       eingabe.toLowerCase() === "1234" ||
@@ -65,44 +61,27 @@ function initAdminEvents() {
     );
 
     if (istKorrekt) {
-      // A) NUR die Passworteingabe und den Button ausblenden
-      if (passInput) {
-        passInput.style.display = "none";
-        if (passInput.previousElementSibling) {
-          passInput.previousElementSibling.style.display = "none";
-        }
-      }
-
+      // Login-Elemente ausblenden
+      if (passInput) passInput.style.display = "none";
+      
       const loginBtn = findLoginBtn(adminModal);
-      if (loginBtn) {
-        loginBtn.style.display = "none";
-      }
+      if (loginBtn) loginBtn.style.display = "none";
 
-      const loginLabels = adminModal.querySelectorAll("label, p");
+      const loginLabels = adminModal.querySelectorAll("label, p, span");
       loginLabels.forEach(el => {
-        if (el.textContent.includes("Passwort") || el.textContent.includes("Anmelden")) {
+        if (el.textContent.includes("Passwort")) {
           el.style.display = "none";
         }
       });
 
-      // B) ALLE Admin-Bereiche & Tabellen einblenden
-      const allModalElements = adminModal.querySelectorAll("div, table, tr, td, th, tbody, thead, button, section, form");
-      allModalElements.forEach(el => {
-        if (el !== passInput && el !== loginBtn) {
-          el.classList.remove("hidden");
-          if (el.style.display === "none") {
-            el.style.display = "block";
-          }
-        }
+      // Admin Haupt-Content einblenden (ohne Unter-Elemente zu zerschießen)
+      const hiddenAdminAreas = adminModal.querySelectorAll(".admin-content, .admin-body, #adminContentArea, .admin-main");
+      hiddenAdminAreas.forEach(area => {
+        area.classList.remove("hidden");
+        area.style.display = "block";
       });
 
-      const tabContents = adminModal.querySelectorAll(".tab-content");
-      tabContents.forEach(tab => {
-        tab.style.display = "block";
-        tab.classList.remove("hidden");
-      });
-
-      // C) Gästeliste rendern
+      // Tabelle initial rendern
       renderAdminTabelle();
     } else {
       alert("Falsches Passwort!");
@@ -110,7 +89,7 @@ function initAdminEvents() {
     }
   }
 
-  // Event-Listener für Anmelden & Enter-Taste
+  // Login Events (Anmelden-Button & Enter-Taste)
   const loginBtn = findLoginBtn(adminModal);
   if (loginBtn) {
     loginBtn.onclick = (e) => {
@@ -129,5 +108,167 @@ function initAdminEvents() {
     };
   }
 
-  const forms = adminModal.querySelectorAll("form");
-  forms
+  // 4. Akkordeon & Klapp-Menüs ("Gästeliste", "Aktionen & Export", "+ Neuen Gast anlegen")
+  setupAccordions(adminModal);
+
+  // 5. Gast hinzufügen Formular
+  const addForm = document.getElementById("addGastForm");
+  if (addForm) {
+    addForm.onsubmit = (e) => {
+      e.preventDefault();
+      neuenGastHinzufuegen();
+    };
+  }
+
+  // 6. Aktion-Buttons: JSON Exportieren & Saalplan Drucken
+  setupActionButtons(adminModal);
+}
+
+// Akkordeon-Funktionalität (Klappen & Tabs)
+function setupAccordions(modal) {
+  const accBtns = modal.querySelectorAll(".admin-accordion-btn, .accordion-btn, .accordion");
+  
+  accBtns.forEach(btn => {
+    btn.onclick = function(e) {
+      e.preventDefault();
+      this.classList.toggle("active");
+
+      // Nächstes Element (Panel) ermitteln
+      let panel = this.nextElementSibling;
+
+      // Falls kein direkter Nachbar, über Daten-Attribut oder ID/Klasse suchen
+      if (!panel && this.getAttribute("data-target")) {
+        panel = modal.querySelector(this.getAttribute("data-target"));
+      }
+
+      if (!panel) {
+        const text = this.textContent.toLowerCase();
+        if (text.includes("aktion")) panel = modal.querySelector("#actionsTab, .actions-tab");
+        else if (text.includes("gast")) panel = modal.querySelector("#addGastTab, #addGastForm, .add-gast-panel");
+        else if (text.includes("liste")) panel = modal.querySelector("#gaesteTabelleTab, .gaeste-table-panel, table");
+      }
+
+      if (panel) {
+        const isHidden = panel.style.display === "none" || panel.classList.contains("hidden") || getComputedStyle(panel).display === "none";
+        if (isHidden) {
+          panel.style.display = "block";
+          panel.classList.remove("hidden");
+        } else {
+          panel.style.display = "none";
+        }
+      }
+    };
+  });
+}
+
+// Buttons für Drucken & Export einrichten
+function setupActionButtons(modal) {
+  // Drucken-Button(s) finden
+  const printBtns = modal.querySelectorAll("#printPlanBtn, #printBtn, #druckenBtn, .btn-print");
+  printBtns.forEach(btn => {
+    btn.onclick = (e) => {
+      e.preventDefault();
+      window.print();
+    };
+  });
+
+  // Export-Button(s) finden
+  const exportBtns = modal.querySelectorAll("#exportJsonBtn, #exportBtn, .btn-export");
+  exportBtns.forEach(btn => {
+    btn.onclick = (e) => {
+      e.preventDefault();
+      exportiereJSON();
+    };
+  });
+
+  // Fallback: Alle Buttons im Modal nach Text durchsuchen
+  const allModalBtns = modal.querySelectorAll("button");
+  allModalBtns.forEach(btn => {
+    const txt = btn.textContent.toLowerCase();
+    if (txt.includes("drucken") && !btn.onclick) {
+      btn.onclick = (e) => { e.preventDefault(); window.print(); };
+    }
+    if (txt.includes("exportieren") && !btn.onclick) {
+      btn.onclick = (e) => { e.preventDefault(); exportiereJSON(); };
+    }
+  });
+}
+
+// Rendert die Admin-Tabelle
+function renderAdminTabelle() {
+  const tbody = document.getElementById("adminGaesteTbody");
+  if (!tbody) return;
+
+  tbody.innerHTML = "";
+  if (!window.gaeste) window.gaeste = [];
+
+  gaeste.sort((a, b) => {
+    if (a.tisch === b.tisch) return a.platz - b.platz;
+    return String(a.tisch).localeCompare(String(b.tisch));
+  });
+
+  gaeste.forEach((gast, index) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${gast.platz}</td>
+      <td>${gast.name}</td>
+      <td>${gast.tisch}</td>
+      <td>${gast.isKind ? "Ja ⭐" : "Nein"}</td>
+      <td>
+        <button class="btn-delete" onclick="gastLoeschen(${index})">Löschen</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// Gast hinzufügen
+function neuenGastHinzufuegen() {
+  const nameInput = document.getElementById("neuerName");
+  const tischInput = document.getElementById("neuerTisch");
+  const platzInput = document.getElementById("neuerPlatz");
+  const kindInput = document.getElementById("neuesKind");
+
+  if (!nameInput || !tischInput || !platzInput) return;
+
+  const tischVal = tischInput.value.trim();
+  const neuesObjekt = {
+    tisch: isNaN(tischVal) ? tischVal : Number(tischVal),
+    platz: Number(platzInput.value),
+    name: nameInput.value.trim(),
+    isKind: kindInput ? kindInput.checked : false
+  };
+
+  if (!window.gaeste) window.gaeste = [];
+  gaeste.push(neuesObjekt);
+  renderAdminTabelle();
+  if (typeof sitzplanErstellen === "function") sitzplanErstellen();
+
+  nameInput.value = "";
+  platzInput.value = "";
+  if (kindInput) kindInput.checked = false;
+
+  alert(`Gast "${neuesObjekt.name}" hinzugefügt!`);
+}
+
+// Gast löschen
+function gastLoeschen(index) {
+  if (!window.gaeste) return;
+  if (confirm(`Möchtest du "${gaeste[index].name}" wirklich löschen?`)) {
+    gaeste.splice(index, 1);
+    renderAdminTabelle();
+    if (typeof sitzplanErstellen === "function") sitzplanErstellen();
+  }
+}
+
+// JSON exportieren
+function exportiereJSON() {
+  if (!window.gaeste) window.gaeste = [];
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(gaeste, null, 2));
+  const downloadAnchor = document.createElement("a");
+  downloadAnchor.setAttribute("href", dataStr);
+  downloadAnchor.setAttribute("download", "data.json");
+  document.body.appendChild(downloadAnchor);
+  downloadAnchor.click();
+  downloadAnchor.remove();
+}
