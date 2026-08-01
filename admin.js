@@ -52,7 +52,7 @@ function initAdminEvents() {
     const pass = passInput.value;
 
     // Liest Passwort aus config.js ODER nutzt "admin" als Fallback
-    let validPass = "admin";
+    let validPass = "Dino29.08";
     if (typeof CONFIG !== "undefined" && CONFIG) {
       validPass = CONFIG.adminPassword || CONFIG.password || CONFIG.pass || validPass;
     }
