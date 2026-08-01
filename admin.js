@@ -39,7 +39,7 @@ function initAdminEvents() {
            modal.querySelector("input");
   }
 
-  // Hilfsfunktion: NUR den Anmelden-Button finden (exakt zuordnen!)
+  // Hilfsfunktion: NUR den Anmelden-Button finden
   function findLoginBtn(modal) {
     const explicitBtn = modal.querySelector("#adminLoginBtn, .btn-login");
     if (explicitBtn) return explicitBtn;
@@ -74,7 +74,7 @@ function initAdminEvents() {
         }
       });
 
-      // Admin Haupt-Content einblenden (ohne Unter-Elemente zu zerschießen)
+      // Admin Haupt-Content einblenden
       const hiddenAdminAreas = adminModal.querySelectorAll(".admin-content, .admin-body, #adminContentArea, .admin-main");
       hiddenAdminAreas.forEach(area => {
         area.classList.remove("hidden");
@@ -133,10 +133,8 @@ function setupAccordions(modal) {
       e.preventDefault();
       this.classList.toggle("active");
 
-      // Nächstes Element (Panel) ermitteln
       let panel = this.nextElementSibling;
 
-      // Falls kein direkter Nachbar, über Daten-Attribut oder ID/Klasse suchen
       if (!panel && this.getAttribute("data-target")) {
         panel = modal.querySelector(this.getAttribute("data-target"));
       }
@@ -163,112 +161,4 @@ function setupAccordions(modal) {
 
 // Buttons für Drucken & Export einrichten
 function setupActionButtons(modal) {
-  // Drucken-Button(s) finden
-  const printBtns = modal.querySelectorAll("#printPlanBtn, #printBtn, #druckenBtn, .btn-print");
-  printBtns.forEach(btn => {
-    btn.onclick = (e) => {
-      e.preventDefault();
-      window.print();
-    };
-  });
-
-  // Export-Button(s) finden
-  const exportBtns = modal.querySelectorAll("#exportJsonBtn, #exportBtn, .btn-export");
-  exportBtns.forEach(btn => {
-    btn.onclick = (e) => {
-      e.preventDefault();
-      exportiereJSON();
-    };
-  });
-
-  // Fallback: Alle Buttons im Modal nach Text durchsuchen
-  const allModalBtns = modal.querySelectorAll("button");
-  allModalBtns.forEach(btn => {
-    const txt = btn.textContent.toLowerCase();
-    if (txt.includes("drucken") && !btn.onclick) {
-      btn.onclick = (e) => { e.preventDefault(); window.print(); };
-    }
-    if (txt.includes("exportieren") && !btn.onclick) {
-      btn.onclick = (e) => { e.preventDefault(); exportiereJSON(); };
-    }
-  });
-}
-
-// Rendert die Admin-Tabelle
-function renderAdminTabelle() {
-  const tbody = document.getElementById("adminGaesteTbody");
-  if (!tbody) return;
-
-  tbody.innerHTML = "";
-  if (!window.gaeste) window.gaeste = [];
-
-  gaeste.sort((a, b) => {
-    if (a.tisch === b.tisch) return a.platz - b.platz;
-    return String(a.tisch).localeCompare(String(b.tisch));
-  });
-
-  gaeste.forEach((gast, index) => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${gast.platz}</td>
-      <td>${gast.name}</td>
-      <td>${gast.tisch}</td>
-      <td>${gast.isKind ? "Ja ⭐" : "Nein"}</td>
-      <td>
-        <button class="btn-delete" onclick="gastLoeschen(${index})">Löschen</button>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
-
-// Gast hinzufügen
-function neuenGastHinzufuegen() {
-  const nameInput = document.getElementById("neuerName");
-  const tischInput = document.getElementById("neuerTisch");
-  const platzInput = document.getElementById("neuerPlatz");
-  const kindInput = document.getElementById("neuesKind");
-
-  if (!nameInput || !tischInput || !platzInput) return;
-
-  const tischVal = tischInput.value.trim();
-  const neuesObjekt = {
-    tisch: isNaN(tischVal) ? tischVal : Number(tischVal),
-    platz: Number(platzInput.value),
-    name: nameInput.value.trim(),
-    isKind: kindInput ? kindInput.checked : false
-  };
-
-  if (!window.gaeste) window.gaeste = [];
-  gaeste.push(neuesObjekt);
-  renderAdminTabelle();
-  if (typeof sitzplanErstellen === "function") sitzplanErstellen();
-
-  nameInput.value = "";
-  platzInput.value = "";
-  if (kindInput) kindInput.checked = false;
-
-  alert(`Gast "${neuesObjekt.name}" hinzugefügt!`);
-}
-
-// Gast löschen
-function gastLoeschen(index) {
-  if (!window.gaeste) return;
-  if (confirm(`Möchtest du "${gaeste[index].name}" wirklich löschen?`)) {
-    gaeste.splice(index, 1);
-    renderAdminTabelle();
-    if (typeof sitzplanErstellen === "function") sitzplanErstellen();
-  }
-}
-
-// JSON exportieren
-function exportiereJSON() {
-  if (!window.gaeste) window.gaeste = [];
-  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(gaeste, null, 2));
-  const downloadAnchor = document.createElement("a");
-  downloadAnchor.setAttribute("href", dataStr);
-  downloadAnchor.setAttribute("download", "data.json");
-  document.body.appendChild(downloadAnchor);
-  downloadAnchor.click();
-  downloadAnchor.remove();
-}
+  const printBtns =
