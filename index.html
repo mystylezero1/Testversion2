@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow, noarchive">
+  <meta name="googlebot" content="noindex">
+  <meta name="bingbot" content="noindex">
+  <meta name="referrer" content="no-referrer">
+  <title>Hochzeitsgesellschaft Anja & Dino</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  
+  <!-- Canvas Confetti Library für Effekte bei der Suche -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+</head>
+<body>
+
+  <!-- Willkommens- & Suchscreen -->
+  <div id="welcome">
+    <div class="welcome-box">
+      <div class="ring-icon">💍</div>
+      <h2>Hochzeitsgesellschaft</h2>
+      <h3>Anja &amp; Dino</h3>
+      
+      <div class="search-container">
+        <input type="text" id="search" placeholder="Name, Tisch- oder Sitznummer..." autocomplete="off">
+        <button id="findenBtn">Gast oder Tisch finden</button>
+      </div>
+      
+      <button id="zeigeGesamtenPlanBtn" class="btn-secondary">Gesamten Saalplan anzeigen</button>
+    </div>
+  </div>
+
+  <!-- Saalplan Overlay -->
+  <div id="overlay" class="hidden">
+    <div id="saalplan">
+      
+      <!-- Sprechblase / Treffer-Benachrichtigung -->
+      <div id="speech" class="speech hidden"></div>
+
+      <!-- Brauttisch-Bereich -->
+      <div id="brautbereich">
+        <div id="brauttisch"></div>
+      </div>
+
+      <!-- Reguläre Tische -->
+      <div id="tische"></div>
+
+      <!-- Unterer Bereich (Eingang, DJ & Tanzfläche) -->
+      <div class="saal-unten">
+        <div class="eingang">🚪 Eingang</div>
+        <div class="dj">🎧 DJ &amp; Tanzfläche</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Steuerungselemente -->
+  <button id="neueSucheBtn" class="floating-btn hidden">🔍 Neue Suche</button>
+  <button id="adminOpenBtn" class="admin-trigger">⚙ Admin</button>
+
+  <!-- Admin Modal -->
+  <div id="adminModal" class="modal hidden">
+    <div class="modal-content glass-card">
+      <div class="modal-header">
+        <h2>Verwaltung &amp; Admin-Konsole</h2>
+        <span class="close-btn" id="closeAdminModal">&times;</span>
+      </div>
+      
+      <!-- Login Bereich -->
+      <div id="adminLoginArea">
+        <p>Bitte Passwort eingeben:</p>
+        <input type="password" id="adminPasswordInput" placeholder="Passwort...">
+        <button id="adminLoginBtn">Anmelden</button>
+        <p id="adminAuthError" class="error-msg hidden">Falsches Passwort!</p>
+      </div>
+
+      <!-- Admin Dashboard (nach Login) -->
+      <div id="adminDashboardArea" class="hidden">
+        <div class="admin-tabs">
+          <button class="tab-btn active" data-tab="gaesteTab">Gästeliste</button>
+          <button class="tab-btn" data-tab="actionsTab">Aktionen &amp; Export</button>
+        </div>
+
+        <div id="gaesteTab" class="tab-content active">
+          <div class="admin-controls">
+            <button id="addGastBtn">+ Neuen Gast anlegen</button>
+          </div>
+          <div class="table-scroll">
+            <table id="adminGaesteTable">
+              <thead>
+                <tr>
+                  <th>Platz</th>
+                  <th>Name</th>
+                  <th>Tisch</th>
+                  <th>Kind?</th>
+                  <th>Aktionen</th>
+                </tr>
+              </thead>
+              <tbody id="adminGaesteTbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="actionsTab" class="tab-content">
+          <div class="admin-actions-grid">
+            <button id="exportJsonBtn">📥 JSON Exportieren</button>
+            <button id="printPlanBtn">🖨️ Saalplan drucken</button>
+          </div>
+        </div>
+
+        <div class="admin-footer">
+          <span id="versionTag">Sitzplan Version 2.0.0 | Stand: 15.08.2026</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <audio id="ding" src="ding.mp3" preload="auto"></audio>
+
+  <script src="config.js"></script>
+  <script src="data.json" type="application/json" id="data-json"></script>
+  <script src="app.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>
