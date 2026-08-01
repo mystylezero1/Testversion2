@@ -1,51 +1,119 @@
+// Admin Konsole Steuerung
+
 document.addEventListener("DOMContentLoaded", () => {
-  const adminModal = document.getElementById("adminModal");
-  const openBtn = document.getElementById("adminOpenBtn");
-  const closeBtn = document.getElementById("closeAdminModal");
-  const loginBtn = document.getElementById("adminLoginBtn");
-  
-  openBtn?.addEventListener("click", () => adminModal?.classList.remove("hidden"));
-  closeBtn?.addEventListener("click", () => adminModal?.classList.add("hidden"));
-
-  loginBtn?.addEventListener("click", () => {
-    const pw = document.getElementById("adminPasswordInput").value;
-    // Vereinfachte Validierung
-    if (pw === "hochzeit2026") {
-      document.getElementById("adminLoginArea")?.classList.add("hidden");
-      document.getElementById("adminDashboardArea")?.classList.remove("hidden");
-      renderAdminTable();
-    } else {
-      document.getElementById("adminAuthError")?.classList.remove("hidden");
-    }
-  });
-
-  document.getElementById("exportJsonBtn")?.addEventListener("click", () => {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(gaeste, null, 2));
-    const dlAnchor = document.createElement('a');
-    dlAnchor.setAttribute("href", dataStr);
-    dlAnchor.setAttribute("download", "sitzplan_export.json");
-    dlAnchor.click();
-  });
+  initAdminEvents();
 });
 
-function renderAdminTable() {
-  const tbody = document.getElementById("adminGaesteTbody");
-  if (!tbody) return;
-  tbody.innerHTML = gaeste.map((g, idx) => `
-    <tr>
-      <td>${g.platz}</td>
-      <td>${g.name || '<i>Leer</i>'}</td>
-      <td>${g.tisch}</td>
-      <td>${g.isKind ? '⭐ Ja' : 'Nein'}</td>
-      <td><button onclick="deleteGast(${idx})" style="padding:4px 8px; font-size:11px; background:#ef4444;">Löschen</button></td>
-    </tr>
-  `).join("");
+function initAdminEvents() {
+  // Accordion / Klapp-Menüs
+  const accordionBtns = document.querySelectorAll(".admin-accordion-btn");
+  accordionBtns.forEach(btn => {
+    btn.addEventListener("click", function() {
+      this.classList.toggle("active");
+      const panel = this.nextElementSibling;
+      if (panel) {
+        if (panel.style.maxHeight) {
+          panel.style.maxHeight = null;
+        } else {
+          panel.style.maxHeight = panel.scrollHeight + "px";
+        }
+      }
+    });
+  });
+
+  // Gast hinzufügen Formular
+  const addForm = document.getElementById("addGastForm");
+  if (addForm) {
+    addForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      neuenGastHinzufuegen();
+    });
+  }
+
+  // JSON Exportieren
+  document.getElementById("exportJsonBtn")?.addEventListener("click", exportiereJSON);
+
+  // Saalplan Drucken
+  document.getElementById("druckenBtn")?.addEventListener("click", () => {
+    window.print();
+  });
 }
 
-function deleteGast(idx) {
-  if (confirm("Gast wirklich löschen?")) {
-    gaeste.splice(idx, 1);
-    renderAdminTable();
+// Rendert die Admin-Tabelle neu
+function renderAdminTabelle() {
+  const tbody = document.getElementById("adminGaesteTbody");
+  if (!tbody) return;
+
+  tbody.innerHTML = "";
+
+  // Sortieren nach Tisch und Platz
+  gaeste.sort((a, b) => {
+    if (a.tisch === b.tisch) return a.platz - b.platz;
+    return String(a.tisch).localeCompare(String(b.tisch));
+  });
+
+  gaeste.forEach((gast, index) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${gast.platz}</td>
+      <td>${gast.name}</td>
+      <td>${gast.tisch}</td>
+      <td>${gast.isKind ? "Ja ⭐" : "Nein"}</td>
+      <td>
+        <button class="btn-delete" onclick="gastLoeschen(${index})">Löschen</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// Neuen Gast zur lokalen Liste hinzufügen
+function neuenGastHinzufuegen() {
+  const nameInput = document.getElementById("neuerName");
+  const tischInput = document.getElementById("neuerTisch");
+  const platzInput = document.getElementById("neuerPlatz");
+  const kindInput = document.getElementById("neuesKind");
+
+  if (!nameInput || !tischInput || !platzInput) return;
+
+  const tischVal = tischInput.value.trim();
+  const neuesObjekt = {
+    tisch: isNaN(tischVal) ? tischVal : Number(tischVal),
+    platz: Number(platzInput.value),
+    name: nameInput.value.trim(),
+    isKind: kindInput ? kindInput.checked : false
+  };
+
+  gaeste.push(neuesObjekt);
+  
+  // UI aktualisieren
+  renderAdminTabelle();
+  if (typeof sitzplanErstellen === "function") sitzplanErstellen();
+
+  // Formular zurücksetzen
+  nameInput.value = "";
+  platzInput.value = "";
+  if (kindInput) kindInput.checked = false;
+
+  alert(`Gast "${neuesObjekt.name}" hinzugefügt! Vergiss nicht, am Ende "JSON Exportieren" zu klicken.`);
+}
+
+// Gast aus lokaler Liste löschen
+function gastLoeschen(index) {
+  if (confirm(`Möchtest du "${gaeste[index].name}" wirklich löschen?`)) {
+    gaeste.splice(index, 1);
+    renderAdminTabelle();
     if (typeof sitzplanErstellen === "function") sitzplanErstellen();
   }
+}
+
+// JSON Datei zum Download anbieten
+function exportiereJSON() {
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(gaeste, null, 2));
+  const downloadAnchor = document.createElement("a");
+  downloadAnchor.setAttribute("href", dataStr);
+  downloadAnchor.setAttribute("download", "data.json");
+  document.body.appendChild(downloadAnchor);
+  downloadAnchor.click();
+  downloadAnchor.remove();
 }
