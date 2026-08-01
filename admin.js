@@ -5,23 +5,51 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function initAdminEvents() {
-  // Accordion / Klapp-Menüs
+  // 1. Admin Button Klick (Passwortabfrage & Tabelle laden)
+  const adminBtn = document.getElementById("adminOpenBtn");
+  const adminModal = document.getElementById("adminModal");
+
+  if (adminBtn && adminModal) {
+    adminBtn.addEventListener("click", () => {
+      const pass = prompt("Bitte Admin-Passwort eingeben:");
+      const validPass = (typeof CONFIG !== "undefined" && CONFIG.adminPassword) ? CONFIG.adminPassword : "admin";
+      
+      if (pass === validPass) {
+        adminModal.classList.remove("hidden");
+        renderAdminTabelle(); // Tabelle beim Öffnen sofort befüllen
+      } else if (pass !== null) {
+        alert("Falsches Passwort!");
+      }
+    });
+  }
+
+  // 2. Modal Schließen (Klick auf 'X' oder Schließen-Button)
+  const closeBtns = document.querySelectorAll("#adminModal .close, #adminModal .close-btn, #adminModal .modal-close");
+  closeBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      adminModal.classList.add("hidden");
+    });
+  });
+
+  // 3. Klapp-Menüs (Accordion) für "+ Neuen Gast anlegen" etc.
   const accordionBtns = document.querySelectorAll(".admin-accordion-btn");
   accordionBtns.forEach(btn => {
     btn.addEventListener("click", function() {
       this.classList.toggle("active");
       const panel = this.nextElementSibling;
       if (panel) {
-        if (panel.style.maxHeight) {
+        if (panel.style.display === "block" || panel.style.maxHeight) {
+          panel.style.display = "none";
           panel.style.maxHeight = null;
         } else {
+          panel.style.display = "block";
           panel.style.maxHeight = panel.scrollHeight + "px";
         }
       }
     });
   });
 
-  // Gast hinzufügen Formular
+  // 4. Gast hinzufügen Formular
   const addForm = document.getElementById("addGastForm");
   if (addForm) {
     addForm.addEventListener("submit", (e) => {
@@ -30,16 +58,16 @@ function initAdminEvents() {
     });
   }
 
-  // JSON Exportieren
+  // 5. JSON Exportieren
   document.getElementById("exportJsonBtn")?.addEventListener("click", exportiereJSON);
 
-  // Saalplan Drucken
+  // 6. Saalplan Drucken
   document.getElementById("druckenBtn")?.addEventListener("click", () => {
     window.print();
   });
 }
 
-// Rendert die Admin-Tabelle neu
+// Rendert die Admin-Tabelle dynamisch neu
 function renderAdminTabelle() {
   const tbody = document.getElementById("adminGaesteTbody");
   if (!tbody) return;
@@ -67,7 +95,7 @@ function renderAdminTabelle() {
   });
 }
 
-// Neuen Gast zur lokalen Liste hinzufügen
+// Neuen Gast zur Liste hinzufügen
 function neuenGastHinzufuegen() {
   const nameInput = document.getElementById("neuerName");
   const tischInput = document.getElementById("neuerTisch");
@@ -86,19 +114,19 @@ function neuenGastHinzufuegen() {
 
   gaeste.push(neuesObjekt);
   
-  // UI aktualisieren
+  // Ansichten aktualisieren
   renderAdminTabelle();
   if (typeof sitzplanErstellen === "function") sitzplanErstellen();
 
-  // Formular zurücksetzen
+  // Eingaben zurücksetzen
   nameInput.value = "";
   platzInput.value = "";
   if (kindInput) kindInput.checked = false;
 
-  alert(`Gast "${neuesObjekt.name}" hinzugefügt! Vergiss nicht, am Ende "JSON Exportieren" zu klicken.`);
+  alert(`Gast "${neuesObjekt.name}" hinzugefügt! Klicke unten auf "JSON Exportieren", um die Änderungen dauerhaft zu speichern.`);
 }
 
-// Gast aus lokaler Liste löschen
+// Gast aus Liste löschen
 function gastLoeschen(index) {
   if (confirm(`Möchtest du "${gaeste[index].name}" wirklich löschen?`)) {
     gaeste.splice(index, 1);
@@ -107,7 +135,7 @@ function gastLoeschen(index) {
   }
 }
 
-// JSON Datei zum Download anbieten
+// JSON Datei herunterladen
 function exportiereJSON() {
   const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(gaeste, null, 2));
   const downloadAnchor = document.createElement("a");
