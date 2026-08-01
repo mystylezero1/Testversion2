@@ -281,3 +281,8 @@ button:hover { background: var(--accent-gold); transform: translateY(-1px); }
 .table-scroll { max-height: 400px; overflow-y: auto; margin-top: 15px; }
 table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
 th, td { padding: 10px; border-bottom: 1px solid var(--border-subtle); }
+@media print {
+  #adminModal, .admin-btn, #adminOpenBtn {
+    display: none !important;
+  }
+}
