@@ -1,42 +1,49 @@
-// 1. Admin Button Klick & Passwortabfrage mit Diagnose
+// Admin Konsole Steuerung (Sicher gegen doppelte Passwort-Prompts)
+
+document.addEventListener("DOMContentLoaded", () => {
+  initAdminEvents();
+});
+
+function initAdminEvents() {
   const adminBtn = document.getElementById("adminOpenBtn");
   const adminModal = document.getElementById("adminModal");
 
+  // 1. Admin Button (onclick verhindert doppelte Listener)
   if (adminBtn && adminModal) {
-    adminBtn.addEventListener("click", () => {
+    adminBtn.onclick = (e) => {
+      e.preventDefault();
+      
       const pass = prompt("Bitte Admin-Passwort eingeben:");
-      if (pass === null) return; // Abgebrochen
+      if (pass === null) return; // Beenden bei "Abbrechen"
 
+      // Liest Passwort aus config.js ODER nutzt "admin" als Fallback
       let validPass = "admin";
       if (typeof CONFIG !== "undefined") {
-        validPass = CONFIG.adminPassword || CONFIG.password || CONFIG.pass || "admin";
+        validPass = CONFIG.adminPassword || CONFIG.password || CONFIG.pass || validPass;
       }
 
-      // Zeigt die Werte direkt in der Konsole an
-      console.log("Eingegeben:", JSON.stringify(pass));
-      console.log("Erwartet:", JSON.stringify(validPass));
-
+      // Vergleich (ignoriert Groß-/Kleinschreibung und Leerzeichen)
       if (pass.trim().toLowerCase() === String(validPass).trim().toLowerCase()) {
         adminModal.classList.remove("hidden");
-        renderAdminTabelle();
+        renderAdminTabelle(); // Tabelle beim Öffnen befüllen
       } else {
-        alert(`Falsches Passwort!\nEingegeben: "${pass}"\nErwartet: "${validPass}"`);
+        alert("Falsches Passwort!");
       }
-    });
+    };
   }
 
   // 2. Modal Schließen (Klick auf 'X' oder Schließen-Button)
   const closeBtns = document.querySelectorAll("#adminModal .close, #adminModal .close-btn, #adminModal .modal-close");
   closeBtns.forEach(btn => {
-    btn.addEventListener("click", () => {
+    btn.onclick = () => {
       adminModal.classList.add("hidden");
-    });
+    };
   });
 
   // 3. Klapp-Menüs (Accordion) für "+ Neuen Gast anlegen" etc.
   const accordionBtns = document.querySelectorAll(".admin-accordion-btn");
   accordionBtns.forEach(btn => {
-    btn.addEventListener("click", function() {
+    btn.onclick = function() {
       this.classList.toggle("active");
       const panel = this.nextElementSibling;
       if (panel) {
@@ -48,25 +55,27 @@
           panel.style.maxHeight = panel.scrollHeight + "px";
         }
       }
-    });
+    };
   });
 
   // 4. Gast hinzufügen Formular
   const addForm = document.getElementById("addGastForm");
   if (addForm) {
-    addForm.addEventListener("submit", (e) => {
+    addForm.onsubmit = (e) => {
       e.preventDefault();
       neuenGastHinzufuegen();
-    });
+    };
   }
 
   // 5. JSON Exportieren
-  document.getElementById("exportJsonBtn")?.addEventListener("click", exportiereJSON);
+  const exportBtn = document.getElementById("exportJsonBtn");
+  if (exportBtn) exportBtn.onclick = exportiereJSON;
 
   // 6. Saalplan Drucken
-  document.getElementById("druckenBtn")?.addEventListener("click", () => {
-    window.print();
-  });
+  const druckenBtn = document.getElementById("druckenBtn");
+  if (druckenBtn) {
+    druckenBtn.onclick = () => window.print();
+  }
 }
 
 // Rendert die Admin-Tabelle dynamisch neu
@@ -125,7 +134,7 @@ function neuenGastHinzufuegen() {
   platzInput.value = "";
   if (kindInput) kindInput.checked = false;
 
-  alert(`Gast "${neuesObjekt.name}" hinzugefügt! Klicke unten auf "JSON Exportieren", um die Änderungen dauerhaft zu speichern.`);
+  alert(`Gast "${neuesObjekt.name}" hinzugefügt! Vergiss nicht, am Ende "JSON Exportieren" zu klicken.`);
 }
 
 // Gast aus Liste löschen
