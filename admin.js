@@ -1,4 +1,4 @@
-// Admin Konsole Steuerung - Perfekt funktionierende Akkordeon- & Druck-Steuerung
+// Admin Konsole Steuerung - Vollständige & Funktionierende Lösung
 
 document.addEventListener("DOMContentLoaded", () => {
   initAdminEvents();
@@ -39,7 +39,7 @@ function initAdminEvents() {
            modal.querySelector("input");
   }
 
-  // Hilfsfunktion: NUR den Anmelden-Button finden
+  // Hilfsfunktion: Anmelden-Button finden
   function findLoginBtn(modal) {
     const explicitBtn = modal.querySelector("#adminLoginBtn, .btn-login");
     if (explicitBtn) return explicitBtn;
@@ -74,11 +74,13 @@ function initAdminEvents() {
         }
       });
 
-      // Admin Haupt-Content einblenden
-      const hiddenAdminAreas = adminModal.querySelectorAll(".admin-content, .admin-body, #adminContentArea, .admin-main");
-      hiddenAdminAreas.forEach(area => {
-        area.classList.remove("hidden");
-        area.style.display = "block";
+      // Alle unsichtbaren Admin-Bereiche freischalten
+      const hiddenElements = adminModal.querySelectorAll(".hidden, [style*='display: none'], [style*='display:none']");
+      hiddenElements.forEach(el => {
+        if (el !== passInput && el !== loginBtn && !el.textContent.includes("Passwort")) {
+          el.classList.remove("hidden");
+          el.style.display = "block";
+        }
       });
 
       // Tabelle initial rendern
@@ -124,7 +126,7 @@ function initAdminEvents() {
   setupActionButtons(adminModal);
 }
 
-// Akkordeon-Funktionalität (Klappen & Tabs)
+// Akkordeon-Funktionalität
 function setupAccordions(modal) {
   const accBtns = modal.querySelectorAll(".admin-accordion-btn, .accordion-btn, .accordion");
   
@@ -147,8 +149,8 @@ function setupAccordions(modal) {
       }
 
       if (panel) {
-        const isHidden = panel.style.display === "none" || panel.classList.contains("hidden") || getComputedStyle(panel).display === "none";
-        if (isHidden) {
+        const currentDisplay = window.getComputedStyle(panel).display;
+        if (currentDisplay === "none" || panel.classList.contains("hidden")) {
           panel.style.display = "block";
           panel.classList.remove("hidden");
         } else {
@@ -161,4 +163,109 @@ function setupAccordions(modal) {
 
 // Buttons für Drucken & Export einrichten
 function setupActionButtons(modal) {
-  const printBtns =
+  const printBtns = modal.querySelectorAll("#printPlanBtn, #printBtn, #druckenBtn, .btn-print");
+  printBtns.forEach(btn => {
+    btn.onclick = (e) => {
+      e.preventDefault();
+      window.print();
+    };
+  });
+
+  const exportBtns = modal.querySelectorAll("#exportJsonBtn, #exportBtn, .btn-export");
+  exportBtns.forEach(btn => {
+    btn.onclick = (e) => {
+      e.preventDefault();
+      exportiereJSON();
+    };
+  });
+
+  const allModalBtns = modal.querySelectorAll("button");
+  allModalBtns.forEach(btn => {
+    const txt = btn.textContent.toLowerCase();
+    if (txt.includes("drucken") && !btn.onclick) {
+      btn.onclick = (e) => { e.preventDefault(); window.print(); };
+    }
+    if (txt.includes("exportieren") && !btn.onclick) {
+      btn.onclick = (e) => { e.preventDefault(); exportiereJSON(); };
+    }
+  });
+}
+
+// Rendert die Admin-Tabelle
+function renderAdminTabelle() {
+  const tbody = document.getElementById("adminGaesteTbody");
+  if (!tbody) return;
+
+  tbody.innerHTML = "";
+  if (!window.gaeste) window.gaeste = [];
+
+  gaeste.sort((a, b) => {
+    if (a.tisch === b.tisch) return a.platz - b.platz;
+    return String(a.tisch).localeCompare(String(b.tisch));
+  });
+
+  gaeste.forEach((gast, index) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${gast.platz}</td>
+      <td>${gast.name}</td>
+      <td>${gast.tisch}</td>
+      <td>${gast.isKind ? "Ja ⭐" : "Nein"}</td>
+      <td>
+        <button class="btn-delete" onclick="gastLoeschen(${index})">Löschen</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// Gast hinzufügen
+function neuenGastHinzufuegen() {
+  const nameInput = document.getElementById("neuerName");
+  const tischInput = document.getElementById("neuerTisch");
+  const platzInput = document.getElementById("neuerPlatz");
+  const kindInput = document.getElementById("neuesKind");
+
+  if (!nameInput || !tischInput || !platzInput) return;
+
+  const tischVal = tischInput.value.trim();
+  const neuesObjekt = {
+    tisch: isNaN(tischVal) ? tischVal : Number(tischVal),
+    platz: Number(platzInput.value),
+    name: nameInput.value.trim(),
+    isKind: kindInput ? kindInput.checked : false
+  };
+
+  if (!window.gaeste) window.gaeste = [];
+  gaeste.push(neuesObjekt);
+  renderAdminTabelle();
+  if (typeof sitzplanErstellen === "function") sitzplanErstellen();
+
+  nameInput.value = "";
+  platzInput.value = "";
+  if (kindInput) kindInput.checked = false;
+
+  alert(`Gast "${neuesObjekt.name}" hinzugefügt!`);
+}
+
+// Gast löschen
+function gastLoeschen(index) {
+  if (!window.gaeste) return;
+  if (confirm(`Möchtest du "${gaeste[index].name}" wirklich löschen?`)) {
+    gaeste.splice(index, 1);
+    renderAdminTabelle();
+    if (typeof sitzplanErstellen === "function") sitzplanErstellen();
+  }
+}
+
+// JSON exportieren
+function exportiereJSON() {
+  if (!window.gaeste) window.gaeste = [];
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(gaeste, null, 2));
+  const downloadAnchor = document.createElement("a");
+  downloadAnchor.setAttribute("href", dataStr);
+  downloadAnchor.setAttribute("download", "data.json");
+  document.body.appendChild(downloadAnchor);
+  downloadAnchor.click();
+  downloadAnchor.remove();
+}
