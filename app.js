@@ -1,133 +1,154 @@
-let gaeste = [];
+// App Steuerung - Vollständiger & Bereinigter Code
+// (Zuständig für Suche, Saalplan-Anzeige und Gastdaten)
+
+// Globales Gäste-Array vorbereiten (falls aus data.json geladen wird)
+window.gaeste = window.gaeste || [];
 
 document.addEventListener("DOMContentLoaded", () => {
-  fetch("data.json")
-    .then(res => res.json())
-    .then(data => {
-      gaeste = data;
-      sitzplanErstellen();
-    })
-    .catch(err => console.error("Fehler beim Laden der Gästedaten:", err));
-
-  document.getElementById("findenBtn")?.addEventListener("click", sucheGast);
-  document.getElementById("search")?.addEventListener("keydown", e => {
-    if (e.key === "Enter") sucheGast();
-  });
-
-  document.getElementById("zeigeGesamtenPlanBtn")?.addEventListener("click", zeigePlan);
-  document.getElementById("neueSucheBtn")?.addEventListener("click", neueSuche);
+  initApp();
 });
 
-function sitzplanErstellen() {
-  const braut = document.getElementById("brauttisch");
-  const tische = document.getElementById("tische");
-  if (!braut || !tische) return;
+async function initApp() {
+  // 1. Falls 'gaeste' noch leer ist, versuchen data.json per Fetch zu laden
+  if (!window.gaeste || window.gaeste.length === 0) {
+    try {
+      const response = await fetch("data.json");
+      if (response.ok) {
+        window.gaeste = await response.json();
+      }
+    } catch (e) {
+      console.warn("data.json konnte nicht direkt geladen werden. Nutze vorhandene Gästedaten.", e);
+    }
+  }
 
-  braut.innerHTML = "";
-  tische.innerHTML = "";
+  // 2. Event-Listener für Suchfunktion & Saalplan-Modal initialisieren
+  initSuchFunktion();
+  initSaalplanModal();
 
-  let brautGaeste = gaeste.filter(g => g.tisch === "Braut").sort((a, b) => a.platz - b.platz);
-
-  // Plätze 1 bis 8 (Obere Reihe inklusive Martin auf Platz 8)
-  let obenBraut = brautGaeste.filter(g => g.platz >= 1 && g.platz <= 8);
-  // Plätze 9 bis 14 (Untere Reihe)
-  let untenBraut = brautGaeste.filter(g => g.platz >= 9 && g.platz <= 14);
-
-  braut.innerHTML = `
-    <div class="braut-reihe braut-oben">
-      ${obenBraut.map(g => platzHTML(g)).join("")}
-    </div>
-    <div class="braut-platte">
-      <span class="tisch-tag">Tisch 1</span>
-      <span>👰🤵 Brauttisch</span>
-      <span class="tisch-tag">Tisch 2</span>
-    </div>
-    <div class="braut-reihe braut-unten">
-      ${untenBraut.map(g => platzHTML(g)).join("")}
-    </div>
-  `;
-
-  let nummern = [...new Set(gaeste.filter(g => g.tisch !== "Braut").map(g => Number(g.tisch)))].sort((a, b) => a - b);
-
-  nummern.forEach(nummer => {
-    let personen = gaeste.filter(g => Number(g.tisch) === nummer).sort((a, b) => a.platz - b.platz);
-    let haelfte = Math.ceil(personen.length / 2);
-    let links = personen.slice(0, haelfte);
-    let rechts = personen.slice(haelfte);
-
-    let box = document.createElement("div");
-    box.className = "tisch-box";
-    box.dataset.tisch = nummer;
-
-    box.innerHTML = `
-      <div class="tisch-inhalt">
-        <div class="seite links">${links.map(g => platzHTML(g)).join("")}</div>
-        <div class="tisch-label"><span>${nummer}</span></div>
-        <div class="seite rechts">${rechts.map(g => platzHTML(g)).join("")}</div>
-      </div>
-    `;
-    tische.appendChild(box);
-  });
+  // 3. Initialen Saalplan rendern
+  sitzplanErstellen();
 }
 
-function platzHTML(g) {
-  if (!g.name) return `<div class="platz empty"></div>`;
-  const star = g.isKind ? `<span class="kind-star" title="Kind">⭐</span>` : '';
-  return `
-    <div class="platz" data-name="${g.name.toLowerCase()}" data-platz="${g.platz}">
-      <span class="platz-nr">${g.platz}</span>
-      <span class="platz-name">${g.name} ${star}</span>
-    </div>
-  `;
+// Such-Logik für Gäste, Tische und Sitznummern
+function initSuchFunktion() {
+  const sucheInput = document.getElementById("sucheInput") || document.querySelector(".input-search, input[type='text']");
+  const sucheBtn = document.getElementById("sucheBtn") || document.querySelector(".btn-search, button[type='submit']");
+
+  if (sucheBtn && sucheInput) {
+    sucheBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      fuehreSucheAus(sucheInput.value);
+    });
+
+    sucheInput.addEventListener("keyup", (e) => {
+      if (e.key === "Enter") {
+        fuehreSucheAus(sucheInput.value);
+      }
+    });
+  }
 }
 
-function sucheGast() {
-  const query = document.getElementById("search").value.trim().toLowerCase();
-  if (!query) return;
-
-  const treffer = gaeste.filter(g => 
-    g.name.toLowerCase().includes(query) || 
-    String(g.tisch) === query || 
-    String(g.platz) === query
-  );
-
-  if (treffer.length === 0) {
-    alert(`Kein Eintrag für "${query}" gefunden.`);
+function fuehreSucheAus(query) {
+  const term = query.trim().toLowerCase();
+  if (!term) {
+    alert("Bitte gib einen Namen, Tisch oder eine Sitznummer ein.");
     return;
   }
 
-  zeigePlan();
-  let ziel = treffer[0];
+  // Gäste filtern (Name, Tisch oder Platznummer)
+  const treffer = gaeste.filter(g => 
+    g.name.toLowerCase().includes(term) ||
+    String(g.tisch).toLowerCase().includes(term) ||
+    String(g.platz).toLowerCase().includes(term)
+  );
 
-  document.querySelectorAll(".highlight").forEach(el => el.classList.remove("highlight"));
+  const ergebnisContainer = document.getElementById("suchErgebnis") || document.getElementById("ergebnisContainer");
 
-  let el;
-  if (ziel.tisch === "Braut") {
-    el = document.getElementById("brauttisch");
+  if (treffer.length > 0) {
+    if (ergebnisContainer) {
+      ergebnisContainer.innerHTML = treffer.map(g => `
+        <div class="gast-karte">
+          <h3>${g.name} ${g.isKind ? "⭐" : ""}</h3>
+          <p><strong>Tisch:</strong> ${g.tisch} | <strong>Platz:</strong> ${g.platz}</p>
+        </div>
+      `).join("");
+      ergebnisContainer.classList.remove("hidden");
+    } else {
+      // Fallback-Popup, falls kein Suchergebnis-Container im HTML vorhanden ist
+      const ergebnisText = treffer.map(g => `• ${g.name} ➔ Tisch: ${g.tisch}, Platz: ${g.platz}`).join("\n");
+      alert(`Gefundene Gäste:\n\n${ergebnisText}`);
+    }
+
+    // Optionaler Soundeffekt (fängt 404-Fehler ab, falls ding.mp3 fehlt)
+    playDingSound();
   } else {
-    el = document.querySelector(`.tisch-box[data-tisch="${ziel.tisch}"]`);
-  }
-
-  if (el) {
-    el.classList.add("highlight");
-    setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "center" }), 200);
-  }
-
-  if (typeof confetti === "function") {
-    confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } });
+    alert(`Keine Ergebnisse für "${query}" gefunden.`);
   }
 }
 
-function zeigePlan() {
-  document.getElementById("welcome")?.classList.add("hidden");
-  document.getElementById("overlay")?.classList.remove("hidden");
-  document.getElementById("neueSucheBtn")?.classList.remove("hidden");
+// Saalplan Modal Steuerung
+function initSaalplanModal() {
+  const saalplanBtn = document.getElementById("saalplanBtn") || document.getElementById("showSaalplanBtn");
+  const saalplanModal = document.getElementById("saalplanModal");
+  const closeBtns = document.querySelectorAll("#saalplanModal .close, #saalplanModal .close-btn");
+
+  if (saalplanBtn && saalplanModal) {
+    saalplanBtn.addEventListener("click", () => {
+      sitzplanErstellen(); // Saalplan vor dem Öffnen frisch zeichnen
+      saalplanModal.classList.remove("hidden");
+    });
+  }
+
+  closeBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      if (saalplanModal) saalplanModal.classList.add("hidden");
+    });
+  });
 }
 
-function neueSuche() {
-  document.getElementById("overlay")?.classList.add("hidden");
-  document.getElementById("neueSucheBtn")?.classList.add("hidden");
-  document.getElementById("welcome")?.classList.remove("hidden");
-  const input = document.getElementById("search");
-  if (input) { input.value = ""; input.focus(); }
+// Generiert die Tischübersicht dynamisch im HTML
+function sitzplanErstellen() {
+  const container = document.getElementById("saalplanContainer") || document.getElementById("tischeContainer");
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  // Nach Tischen gruppieren
+  const tische = {};
+  gaeste.forEach(gast => {
+    const tischKey = gast.tisch || "Unbekannt";
+    if (!tische[tischKey]) tische[tischKey] = [];
+    tische[tischKey].push(gast);
+  });
+
+  // Tische rendern
+  Object.keys(tische).forEach(tischName => {
+    const tischDiv = document.createElement("div");
+    tischDiv.className = "tisch-karte";
+
+    // Plätze aufsteigend sortieren
+    tische[tischName].sort((a, b) => a.platz - b.platz);
+
+    const gaesteListe = tische[tischName].map(g => 
+      `<li>Platz ${g.platz}: <strong>${g.name}</strong> ${g.isKind ? "⭐" : ""}</li>`
+    ).join("");
+
+    tischDiv.innerHTML = `
+      <h3>Tisch: ${tischName}</h3>
+      <ul>${gaesteListe}</ul>
+    `;
+    container.appendChild(tischDiv);
+  });
+}
+
+// Sichere Sound-Funktion (verhindert Konsolenfehler, falls mp3 nicht existiert)
+function playDingSound() {
+  try {
+    const audio = new Audio("ding.mp3");
+    audio.play().catch(() => {
+      // Stillschweigend abfangen, wenn Audio fehlt oder vom Browser blockiert wird
+    });
+  } catch (e) {
+    // Fehler ignorieren
+  }
 }
