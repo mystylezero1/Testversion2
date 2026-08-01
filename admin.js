@@ -1,30 +1,26 @@
-// Admin Konsole Steuerung - Vollständiger Code
-
-document.addEventListener("DOMContentLoaded", () => {
-  initAdminEvents();
-});
-
-function initAdminEvents() {
-  // 1. Admin Button Klick & Passwortabfrage
+// 1. Admin Button Klick & Passwortabfrage mit Diagnose
   const adminBtn = document.getElementById("adminOpenBtn");
   const adminModal = document.getElementById("adminModal");
 
   if (adminBtn && adminModal) {
     adminBtn.addEventListener("click", () => {
       const pass = prompt("Bitte Admin-Passwort eingeben:");
-      
-      // Liest Passwort aus config.js ODER nutzt "admin" als Fallback
+      if (pass === null) return; // Abgebrochen
+
       let validPass = "admin";
       if (typeof CONFIG !== "undefined") {
-        validPass = CONFIG.adminPassword || CONFIG.password || CONFIG.pass || validPass;
+        validPass = CONFIG.adminPassword || CONFIG.password || CONFIG.pass || "admin";
       }
 
-      // Groß-/Kleinschreibung und Leerzeichen werden ignoriert
-      if (pass !== null && pass.trim().toLowerCase() === String(validPass).trim().toLowerCase()) {
+      // Zeigt die Werte direkt in der Konsole an
+      console.log("Eingegeben:", JSON.stringify(pass));
+      console.log("Erwartet:", JSON.stringify(validPass));
+
+      if (pass.trim().toLowerCase() === String(validPass).trim().toLowerCase()) {
         adminModal.classList.remove("hidden");
-        renderAdminTabelle(); // Tabelle beim Öffnen befüllen
-      } else if (pass !== null) {
-        alert("Falsches Passwort!");
+        renderAdminTabelle();
+      } else {
+        alert(`Falsches Passwort!\nEingegeben: "${pass}"\nErwartet: "${validPass}"`);
       }
     });
   }
