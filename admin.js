@@ -1,4 +1,4 @@
-// Admin Konsole Steuerung - Präzise Feldsuche & Notfall-Freischaltung
+// Admin Konsole Steuerung - Vollständige & Robuste Lösung
 
 document.addEventListener("DOMContentLoaded", () => {
   initAdminEvents();
@@ -32,54 +32,67 @@ function initAdminEvents() {
     };
   });
 
-  // Hilfsfunktion: Findet exakt das Passwort-Eingabefeld (und ignoriert Gästelisten-Inputs!)
+  // Hilfsfunktion: Findet das Passwort-Eingabefeld
   function meinvollstaendigesPasswortFeld(modal) {
-    // 1. Suche nach type="password"
     let input = modal.querySelector("input[type='password']");
     if (input) return input;
-
-    // 2. Suche nach Input in der Nähe des Anmelden-Buttons
-    const loginBtn = modal.querySelector("#adminLoginBtn, .btn-login, button");
+    
+    const loginBtn = modal.querySelector("#adminLoginBtn, .btn-login, button:not(.close)");
     if (loginBtn && loginBtn.parentElement) {
       input = loginBtn.parentElement.querySelector("input");
       if (input) return input;
     }
-
-    // 3. Erstes Input im Modal als Ausweichoption
     return modal.querySelector("input");
   }
 
-  // Passwort-Prüfung
+  // Passwort-Prüfung und Inhalt-Freischaltung
   function pruefePasswort() {
     const passInput = meinvollstaendigesPasswortFeld(adminModal);
     const eingabe = passInput ? passInput.value.trim() : "";
 
-    // Akzeptiert "admin", "1234", "hochzeit" ODER leeres Feld (einfach Anmelden klicken)
+    // Passwort akzeptieren ("admin", "1234", "hochzeit" ODER einfach leer lassen)
     const istKorrekt = (
       eingabe.toLowerCase() === "admin" ||
       eingabe.toLowerCase() === "1234" ||
       eingabe.toLowerCase() === "hochzeit" ||
-      eingabe === "" // Schaltet auch frei, wenn das Feld leer gelassen wird!
+      eingabe === ""
     );
 
     if (istKorrekt) {
-      // ERFOLG: Anmeldebereich ausblenden & Admin-Inhalte anzeigen
-      const loginElements = adminModal.querySelectorAll(".admin-login-area, #adminLoginArea, form, p, label");
-      loginElements.forEach(el => {
-        if (!el.contains(document.getElementById("adminGaesteTbody"))) {
-          el.style.display = "none";
+      // A. Login-Eingabefeld und Button ausblenden
+      let loginContainer = adminModal.querySelector(".admin-login-area, #adminLoginArea, .login-container, form");
+      if (!loginContainer && passInput) {
+        loginContainer = passInput.closest("div:not(#adminModal):not(.modal-content)") || passInput.parentElement;
+      }
+
+      if (loginContainer) {
+        loginContainer.style.display = "none";
+        loginContainer.classList.add("hidden");
+      }
+
+      // B. ALLE verborgenen Bereiche im Admin-Modal freischalten & einblenden
+      const allElements = adminModal.querySelectorAll("*");
+      allElements.forEach(el => {
+        if (!loginContainer || !loginContainer.contains(el)) {
+          el.classList.remove("hidden");
+          if (el.style.display === "none") {
+            el.style.display = "";
+          }
         }
       });
 
-      const adminElements = adminModal.querySelectorAll(".admin-accordion-btn, table, .admin-footer, #adminGaesteTbody, .admin-content-area, #adminContentArea");
-      adminElements.forEach(el => {
-        el.style.display = "";
-        el.classList.remove("hidden");
+      // Haupt-Admin-Container explizit als Block anzeigen
+      const mainContentAreas = adminModal.querySelectorAll("#adminContent, .admin-content, .admin-body, #adminContentArea, div");
+      mainContentAreas.forEach(area => {
+        if (!loginContainer || !loginContainer.contains(area)) {
+          area.classList.remove("hidden");
+        }
       });
 
+      // C. Gästeliste Rendern
       renderAdminTabelle();
     } else {
-      alert(`Falsches Passwort!\n\nEingelesen wurde: "${eingabe}"\nErlaubt ist z.B.: "admin" oder einfach leer lassen.`);
+      alert(`Falsches Passwort!`);
       if (passInput) passInput.value = "";
     }
   }
