@@ -26,10 +26,11 @@ function sitzplanErstellen() {
   braut.innerHTML = "";
   tische.innerHTML = "";
 
-  let brautGaeste = gaeste.filter(g => g.tisch === "Braut").sort((a,b) => a.platz - b.platz);
-  
-  // Plätze 1-7 in der oberen Reihe renderbar machen (Kästchen 8 bleibt bewusst ungenutzt)
-  let obenBraut = brautGaeste.filter(g => g.platz >= 1 && g.platz <= 7);
+  let brautGaeste = gaeste.filter(g => g.tisch === "Braut").sort((a, b) => a.platz - b.platz);
+
+  // Plätze 1 bis 8 (Obere Reihe inklusive Martin auf Platz 8)
+  let obenBraut = brautGaeste.filter(g => g.platz >= 1 && g.platz <= 8);
+  // Plätze 9 bis 14 (Untere Reihe)
   let untenBraut = brautGaeste.filter(g => g.platz >= 9 && g.platz <= 14);
 
   braut.innerHTML = `
@@ -46,10 +47,10 @@ function sitzplanErstellen() {
     </div>
   `;
 
-  let nummern = [...new Set(gaeste.filter(g => g.tisch !== "Braut").map(g => Number(g.tisch)))].sort((a,b) => a - b);
-  
+  let nummern = [...new Set(gaeste.filter(g => g.tisch !== "Braut").map(g => Number(g.tisch)))].sort((a, b) => a - b);
+
   nummern.forEach(nummer => {
-    let personen = gaeste.filter(g => Number(g.tisch) === nummer).sort((a,b) => a.platz - b.platz);
+    let personen = gaeste.filter(g => Number(g.tisch) === nummer).sort((a, b) => a.platz - b.platz);
     let haelfte = Math.ceil(personen.length / 2);
     let links = personen.slice(0, haelfte);
     let rechts = personen.slice(haelfte);
@@ -97,7 +98,7 @@ function sucheGast() {
 
   zeigePlan();
   let ziel = treffer[0];
-  
+
   document.querySelectorAll(".highlight").forEach(el => el.classList.remove("highlight"));
 
   let el;
