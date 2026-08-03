@@ -1,12 +1,15 @@
-/* --- Google Fonts & Variablen --- */
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
 :root {
-  --bg-color: #7b7b7b;
-  --card-bg: #fdfbf7;
-  --text-color: #333333;
+  --bg-color: #8c8c8c;
+  --card-bg: rgba(253, 251, 247, 0.94);
+  --table-bg: #ffffff;
+  --text-main: #2c2c2c;
   --text-muted: #8c764d;
-  --gold-accent: #d4af37;
-  --border-color: rgba(220, 210, 195, 0.6);
-  --shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+  --gold-primary: #d4af37;
+  --gold-light: #fdfbf7;
+  --border-subtle: rgba(220, 210, 195, 0.5);
+  --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.08);
 }
 
 * {
@@ -18,7 +21,7 @@
 body {
   font-family: 'Plus Jakarta Sans', sans-serif;
   background-color: var(--bg-color);
-  color: var(--text-color);
+  color: var(--text-main);
   min-height: 100vh;
   display: flex;
   justify-content: center;
@@ -26,12 +29,12 @@ body {
   padding: 20px;
 }
 
-/* --- Sichtbarkeit & Utilities --- */
+/* --- Sichtbarkeits-Klasse --- */
 .hidden {
   display: none !important;
 }
 
-/* --- Welcome Card (Such-Screen) --- */
+/* --- Welcome / Such-Screen --- */
 #welcome {
   display: flex;
   justify-content: center;
@@ -42,23 +45,25 @@ body {
 .welcome-box {
   background: var(--card-bg);
   padding: 40px 30px;
-  border-radius: 20px;
-  box-shadow: var(--shadow);
+  border-radius: 24px;
+  box-shadow: var(--shadow-soft);
   text-align: center;
   max-width: 420px;
   width: 100%;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--border-subtle);
+  backdrop-filter: blur(10px);
 }
 
 .ring-icon {
   font-size: 32px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .welcome-box h2 {
   font-family: 'Cormorant Garamond', serif;
-  font-size: 28px;
-  color: #2c2c2c;
+  font-size: 30px;
+  font-weight: 700;
+  color: #222;
 }
 
 .welcome-box h3 {
@@ -71,68 +76,65 @@ body {
 .search-container {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
   margin-bottom: 15px;
 }
 
 input[type="text"], input[type="password"], input[type="number"] {
   width: 100%;
-  padding: 12px 15px;
-  border: 1px solid #e0d7c6;
+  padding: 12px 16px;
+  border: 1px solid #e2d7c5;
   border-radius: 10px;
   font-size: 14px;
   background: #ffffff;
   outline: none;
+  font-family: inherit;
   transition: border-color 0.2s;
 }
 
 input:focus {
-  border-color: var(--gold-accent);
+  border-color: var(--gold-primary);
 }
 
 button {
   cursor: pointer;
   border: none;
-  background: #2c2c2c;
+  background: #2b2b2b;
   color: #ffffff;
   padding: 12px 20px;
   border-radius: 10px;
   font-weight: 600;
   font-size: 14px;
-  transition: background 0.2s, transform 0.1s;
+  transition: all 0.2s ease;
 }
 
 button:hover {
-  background: #444444;
-}
-
-button:active {
-  transform: scale(0.98);
+  background: #404040;
 }
 
 .btn-secondary {
-  background: #f0eae1;
-  color: #5a5243;
+  background: #f2ebd9;
+  color: #635338;
   width: 100%;
 }
 
 .btn-secondary:hover {
-  background: #e4dbc9;
+  background: #e6dcbf;
 }
 
-/* --- Haupt-Saalplan Card --- */
+/* --- Haupt-Saalplan Container --- */
 #overlay {
   width: 100%;
-  max-width: 1100px;
+  max-width: 1150px;
 }
 
 #saalplan {
   background: var(--card-bg);
-  border-radius: 24px;
-  padding: 30px;
-  box-shadow: var(--shadow);
-  border: 1px solid var(--border-color);
-  position: relative;
+  border-radius: 28px;
+  padding: 35px;
+  box-shadow: var(--shadow-soft);
+  border: 1px solid var(--border-subtle);
+  backdrop-filter: blur(10px);
 }
 
 /* --- Brauttisch --- */
@@ -143,21 +145,21 @@ button:active {
 }
 
 #brauttisch {
-  background: #ffffff;
-  border-radius: 16px;
-  padding: 15px 20px;
-  border: 1px solid var(--border-color);
-  box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+  background: var(--table-bg);
+  border-radius: 18px;
+  padding: 16px 24px;
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  min-width: 450px;
+  gap: 12px;
+  min-width: 500px;
 }
 
 .braut-reihe {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: wrap;
   justify-content: center;
 }
@@ -167,50 +169,49 @@ button:active {
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: 8px 16px;
+  padding: 8px 18px;
   background: #fdfbf7;
-  border: 1px dashed var(--gold-accent);
-  border-radius: 8px;
+  border: 1px dashed var(--gold-primary);
+  border-radius: 10px;
   font-family: 'Cormorant Garamond', serif;
   font-weight: 700;
-  color: #937325;
-  font-size: 18px;
+  color: #8c764d;
+  font-size: 20px;
 }
 
 .tisch-tag {
   font-size: 10px;
   background: #ffffff;
   border: 1px solid #e2d7c5;
-  padding: 2px 6px;
-  border-radius: 4px;
+  padding: 2px 8px;
+  border-radius: 5px;
   color: #8c764d;
   font-family: 'Plus Jakarta Sans', sans-serif;
+  letter-spacing: 0.5px;
 }
 
-/* --- Tisch Reihen & Einzelne Tische --- */
+/* --- Tisch Grid & Reihen --- */
 #tische {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 18px;
 }
 
 .tisch-reihe {
   display: flex;
   justify-content: center;
-  align-items: stretch;
-  gap: 12px;
+  align-items: center;
+  gap: 14px;
 }
 
 .tisch-box {
-  background: #ffffff;
-  border-radius: 12px;
-  padding: 8px 10px;
-  border: 1px solid var(--border-color);
-  box-shadow: 0 2px 10px rgba(0,0,0,0.02);
-  display: flex;
-  align-items: center;
+  background: var(--table-bg);
+  border-radius: 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.03);
   flex: 1;
-  max-width: 190px;
+  max-width: 195px;
 }
 
 .tisch-inhalt {
@@ -218,41 +219,40 @@ button:active {
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  gap: 4px;
 }
 
 .tisch-inhalt .seite {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 5px;
   flex: 1;
 }
 
 .tisch-label {
   font-family: 'Cormorant Garamond', serif;
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 700;
   color: #a38f67;
-  padding: 0 4px;
+  padding: 0 6px;
   text-align: center;
 }
 
-/* --- Plätze (Badges) --- */
+/* --- Platz-Badges --- */
 .platz {
   display: flex;
   align-items: center;
-  gap: 3px;
-  font-size: 10px;
-  color: #4a4a4a;
+  gap: 4px;
+  font-size: 11px;
+  color: #3f3f3f;
   background: #fcfbf9;
-  padding: 2px 5px;
-  border-radius: 4px;
+  padding: 3px 6px;
+  border-radius: 6px;
   border: 1px solid #f0eae1;
   white-space: nowrap;
 }
 
 .platz-nr {
-  font-size: 8.5px;
+  font-size: 9px;
   color: #b5a482;
   font-weight: 600;
 }
@@ -262,28 +262,29 @@ button:active {
 }
 
 .kind-star {
-  font-size: 9px;
+  font-size: 10px;
+  color: #d4af37;
 }
 
-/* --- Buffet Box --- */
+/* --- Buffet & Ausschank Box --- */
 .buffet-box {
   background: #fdfaf3;
-  border: 1px dashed var(--gold-accent);
-  border-radius: 12px;
-  padding: 10px;
+  border: 1px dashed var(--gold-primary);
+  border-radius: 14px;
+  padding: 15px 10px;
   text-align: center;
-  color: #937325;
+  color: #8c764d;
   font-family: 'Cormorant Garamond', serif;
-  font-weight: 600;
-  font-size: 13px;
+  font-weight: 700;
+  font-size: 15px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex: 1;
-  max-width: 190px;
+  max-width: 195px;
 }
 
-/* --- Saal Unten (Eingang & DJ) --- */
+/* --- Saal-Unterseite (Eingang & DJ) --- */
 .saal-unten {
   display: flex;
   gap: 15px;
@@ -291,50 +292,52 @@ button:active {
 }
 
 .eingang, .dj {
-  background: #ffffff;
-  border-radius: 10px;
-  padding: 10px 20px;
-  border: 1px solid var(--border-color);
+  background: var(--table-bg);
+  border-radius: 12px;
+  padding: 12px 20px;
+  border: 1px solid var(--border-subtle);
   font-size: 13px;
-  color: #666;
+  color: #555;
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
 }
 
-.eingang { flex: 1; max-width: 150px; }
+.eingang { flex: 1; max-width: 160px; }
 .dj { flex: 3; }
 
-/* --- Highlight Animation --- */
+/* --- Search Highlighting --- */
 .highlight {
-  animation: pulseHighlight 1.5s infinite alternate;
-  border-color: var(--gold-accent) !important;
+  animation: pulseGold 1.5s infinite alternate;
+  border-color: var(--gold-primary) !important;
 }
 
-@keyframes pulseHighlight {
-  0% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.4); }
-  100% { box-shadow: 0 0 0 12px rgba(212, 175, 55, 0); }
+@keyframes pulseGold {
+  0% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.5); }
+  100% { box-shadow: 0 0 0 14px rgba(212, 175, 55, 0); }
 }
 
-/* --- Floating Action Buttons --- */
+/* --- Floating Buttons --- */
 .floating-btn, .admin-trigger {
   position: fixed;
   bottom: 20px;
   border-radius: 20px;
   padding: 10px 18px;
   font-size: 12px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
   z-index: 100;
 }
 
 .floating-btn { right: 20px; }
-.admin-trigger { left: 20px; background: #333; }
+.admin-trigger { left: 20px; background: #2c2c2c; }
 
 /* --- Admin Modal --- */
 .modal {
   position: fixed;
   top: 0; left: 0; width: 100%; height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -343,13 +346,13 @@ button:active {
 
 .glass-card {
   background: #ffffff;
-  border-radius: 16px;
-  padding: 25px;
+  border-radius: 20px;
+  padding: 28px;
   width: 90%;
-  max-width: 650px;
+  max-width: 680px;
   max-height: 85vh;
   overflow-y: auto;
-  box-shadow: var(--shadow);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.15);
 }
 
 .modal-header {
@@ -360,7 +363,7 @@ button:active {
 }
 
 .close-btn {
-  font-size: 24px;
+  font-size: 22px;
   cursor: pointer;
   color: #888;
 }
@@ -368,25 +371,26 @@ button:active {
 .admin-tabs {
   display: flex;
   gap: 10px;
-  margin-bottom: 15px;
+  margin-bottom: 18px;
   border-bottom: 1px solid #eee;
   padding-bottom: 10px;
 }
 
 .tab-btn {
-  background: #f0f0f0;
-  color: #333;
-  padding: 6px 14px;
-  font-size: 12px;
+  background: #f4f0e8;
+  color: #555;
+  padding: 8px 16px;
+  font-size: 13px;
+  border-radius: 8px;
 }
 
 .tab-btn.active {
-  background: var(--gold-accent);
+  background: var(--gold-primary);
   color: #fff;
 }
 
 .table-scroll {
-  max-height: 350px;
+  max-height: 380px;
   overflow-y: auto;
 }
 
@@ -397,9 +401,13 @@ table {
 }
 
 th, td {
-  padding: 8px 10px;
+  padding: 10px 12px;
   text-align: left;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid #f0eee8;
 }
 
-th { background: #fdfbf7; }
+th {
+  background: #fbf9f5;
+  font-weight: 600;
+  color: #666;
+}
