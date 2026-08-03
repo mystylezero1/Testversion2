@@ -120,13 +120,13 @@ button:hover {
 /* --- Haupt-Saalplan Container --- */
 #overlay {
   width: 100%;
-  max-width: 1280px;
+  max-width: 1200px;
 }
 
 #saalplan {
   background: var(--card-bg);
   border-radius: 28px;
-  padding: 30px 25px;
+  padding: 30px 20px;
   box-shadow: var(--shadow-soft);
   border: 1px solid var(--border-subtle);
   backdrop-filter: blur(10px);
@@ -186,30 +186,22 @@ button:hover {
   font-family: 'Plus Jakarta Sans', sans-serif;
 }
 
-/* --- NEU: Hauptbereich mit Layout "Tische links, Buffet rechts" --- */
-.saal-hauptbereich {
-  display: flex;
-  gap: 20px;
-  align-items: stretch;
-  width: 100%;
-}
-
-/* Tischbereich links */
+/* --- Tisch Grid & Reihen --- */
 #tische {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  flex: 1; /* Nimmt den Hauptplatz ein */
+  width: 100%;
 }
 
 .tisch-reihe {
   display: grid;
-  grid-template-columns: repeat(5, 1fr); /* Genau 5 gleichgroße Tische pro Reihe */
+  grid-template-columns: repeat(5, 1fr); /* 5 gleichgroße Felder pro Reihe */
   gap: 12px;
   width: 100%;
 }
 
-/* Exakte Tischkasten-Formate */
+/* Feste Größen für ALLE Tischkarten */
 .tisch-box {
   background: var(--table-bg);
   border-radius: 14px;
@@ -295,23 +287,24 @@ button:hover {
   flex-shrink: 0;
 }
 
-/* NEU: Ausschank & Buffet als eigener Steh-Block RECHTS NEBEN den Tischen */
+/* --- BUFFET NEBEN TISCH 12 --- */
+/* Das Buffet teilt sich exakt das 5er-Grid der Reihe, sitzt rechts neben Tisch 12 */
 .buffet-box {
   background: #fdfaf3;
   border: 1px dashed var(--gold-primary);
-  border-radius: 18px;
-  padding: 20px 15px;
+  border-radius: 14px;
+  padding: 10px;
   text-align: center;
   color: #8c764d;
   font-family: 'Cormorant Garamond', serif;
   font-weight: 700;
-  font-size: 18px;
+  font-size: 15px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 180px; /* Feste, elegante Breite rechts */
+  height: 155px;
+  width: 100%;
   box-sizing: border-box;
-  flex-shrink: 0;
 }
 
 /* --- Saal-Unterseite (Eingang & DJ) --- */
@@ -337,7 +330,7 @@ button:hover {
 .eingang { flex: 1; }
 .dj { flex: 4; }
 
-/* --- Search Highlighting --- */
+/* --- Search Highlighting & Modals --- */
 .highlight {
   animation: pulseGold 1.5s infinite alternate;
   border-color: var(--gold-primary) !important;
@@ -348,7 +341,6 @@ button:hover {
   100% { box-shadow: 0 0 0 14px rgba(212, 175, 55, 0); }
 }
 
-/* --- Floating Buttons --- */
 .floating-btn, .admin-trigger {
   position: fixed;
   bottom: 20px;
@@ -362,7 +354,6 @@ button:hover {
 .floating-btn { right: 20px; }
 .admin-trigger { left: 20px; background: #2c2c2c; }
 
-/* --- Admin Modal --- */
 .modal {
   position: fixed;
   top: 0; left: 0; width: 100%; height: 100%;
