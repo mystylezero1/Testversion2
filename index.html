@@ -4,17 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow, noarchive">
-  <meta name="googlebot" content="noindex">
-  <meta name="bingbot" content="noindex">
-  <meta name="referrer" content="no-referrer">
-  <title>Hochzeitsgesellschaft Anja & Dino</title>
+  <title>Hochzeitsgesellschaft Anja &amp; Dino</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   
-  <!-- Canvas Confetti Library für Effekte bei der Suche -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
 <body>
@@ -39,7 +35,6 @@
   <div id="overlay" class="hidden">
     <div id="saalplan">
       
-      <!-- Sprechblase / Treffer-Benachrichtigung -->
       <div id="speech" class="speech hidden"></div>
 
       <!-- Brauttisch-Bereich -->
@@ -50,7 +45,7 @@
       <!-- Reguläre Tische -->
       <div id="tische"></div>
 
-      <!-- Unterer Bereich (Eingang, DJ & Tanzfläche) -->
+      <!-- Unterer Bereich -->
       <div class="saal-unten">
         <div class="eingang">🚪 Eingang</div>
         <div class="dj">🎧 DJ &amp; Tanzfläche</div>
@@ -76,22 +71,20 @@
         <p>Bitte Passwort eingeben:</p>
         <input type="password" id="adminPasswordInput" placeholder="Passwort...">
         <button id="adminLoginBtn">Anmelden</button>
-        <p id="adminAuthError" class="error-msg hidden">Falsches Passwort!</p>
       </div>
 
-      <!-- Admin Dashboard (nach Login) -->
-      <div id="adminDashboardArea" class="hidden">
+      <!-- Admin Dashboard -->
+      <div id="adminDashboardArea" class="admin-main hidden">
         <div class="admin-tabs">
-          <button class="tab-btn active" data-tab="gaesteTab">Gästeliste</button>
-          <button class="tab-btn" data-tab="actionsTab">Aktionen &amp; Export</button>
+          <button class="tab-btn active" id="tabGaesteBtn">Gästeliste</button>
+          <button class="tab-btn" id="tabAddBtn">+ Gast hinzufügen</button>
+          <button class="tab-btn" id="tabActionsBtn">Aktionen &amp; Export</button>
         </div>
 
-        <div id="gaesteTab" class="tab-content active">
-          <div class="admin-controls">
-            <button id="addGastBtn">+ Neuen Gast anlegen</button>
-          </div>
+        <!-- Tab 1: Gästeliste -->
+        <div id="gaesteTab" class="tab-content">
           <div class="table-scroll">
-            <table id="adminGaesteTable">
+            <table>
               <thead>
                 <tr>
                   <th>Platz</th>
@@ -106,14 +99,28 @@
           </div>
         </div>
 
-        <div id="actionsTab" class="tab-content">
-          <div class="admin-actions-grid">
+        <!-- Tab 2: Gast hinzufügen -->
+        <div id="addGastTab" class="tab-content hidden">
+          <form id="addGastForm" style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
+            <input type="text" id="neuerName" placeholder="Name des Gastes" required>
+            <input type="text" id="neuerTisch" placeholder="Tisch (z.B. 1 oder Braut)" required>
+            <input type="number" id="neuerPlatz" placeholder="Platznummer" required>
+            <label style="font-size: 14px; display: flex; align-items: center; gap: 8px;">
+              <input type="checkbox" id="neuesKind"> Ist es ein Kind?
+            </label>
+            <button type="submit">Gast Speichern</button>
+          </form>
+        </div>
+
+        <!-- Tab 3: Aktionen -->
+        <div id="actionsTab" class="tab-content hidden">
+          <div class="admin-actions-grid" style="display: flex; gap: 10px; margin-top: 15px;">
             <button id="exportJsonBtn">📥 JSON Exportieren</button>
             <button id="printPlanBtn">🖨️ Saalplan drucken</button>
           </div>
         </div>
 
-        <div class="admin-footer">
+        <div class="admin-footer" style="margin-top: 20px; font-size: 11px; color: var(--text-muted);">
           <span id="versionTag">Sitzplan Version 2.0.0 | Stand: 15.08.2026</span>
         </div>
       </div>
