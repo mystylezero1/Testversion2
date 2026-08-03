@@ -120,7 +120,7 @@ button:hover {
 /* --- Haupt-Saalplan Container --- */
 #overlay {
   width: 100%;
-  max-width: 1200px;
+  max-width: 1280px;
 }
 
 #saalplan {
@@ -131,6 +131,7 @@ button:hover {
   border: 1px solid var(--border-subtle);
   backdrop-filter: blur(10px);
   width: 100%;
+  overflow-x: auto; /* Sicherheitshalber bei kleineren Monitoren */
 }
 
 /* --- Brauttisch Bereich --- */
@@ -186,35 +187,45 @@ button:hover {
   font-family: 'Plus Jakarta Sans', sans-serif;
 }
 
-/* --- Tisch Grid & Reihen --- */
+/* --- Tisch Reihen & Garantierte Einheitlichkeit --- */
 #tische {
   display: flex;
   flex-direction: column;
   gap: 16px;
   width: 100%;
+  align-items: center;
 }
 
 .tisch-reihe {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr); /* 5 gleichgroße Felder pro Reihe */
-  gap: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
   width: 100%;
 }
 
-/* Feste Größen für ALLE Tischkarten */
+/* RIGIDE REGEL: JEDER Tisch hat HAARGENAU dieselbe Größe */
 .tisch-box {
   background: var(--table-bg);
   border-radius: 14px;
   padding: 8px 6px;
   border: 1px solid var(--border-subtle);
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
-  height: 155px;
-  width: 100%;
+  
+  /* Unverrückbare feste Ausmaße */
+  width: 175px !important;
+  min-width: 175px !important;
+  max-width: 175px !important;
+  height: 155px !important;
+  min-height: 155px !important;
+  max-height: 155px !important;
+  
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   justify-content: center;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .tisch-inhalt {
@@ -255,7 +266,7 @@ button:hover {
   display: flex;
   align-items: center;
   gap: 3px;
-  font-size: 10px;
+  font-size: 9.5px;
   color: #3f3f3f;
   background: #fcfbf9;
   padding: 2px 4px;
@@ -268,7 +279,7 @@ button:hover {
 }
 
 .platz-nr {
-  font-size: 8.5px;
+  font-size: 8px;
   color: #b5a482;
   font-weight: 600;
   flex-shrink: 0;
@@ -282,13 +293,12 @@ button:hover {
 }
 
 .kind-star {
-  font-size: 9px;
+  font-size: 8.5px;
   color: #d4af37;
   flex-shrink: 0;
 }
 
-/* --- BUFFET NEBEN TISCH 12 --- */
-/* Das Buffet teilt sich exakt das 5er-Grid der Reihe, sitzt rechts neben Tisch 12 */
+/* EXAKT DIE GLEICHE GRÖSSE WIE DIE TISCHE: Ausschank & Buffet */
 .buffet-box {
   background: #fdfaf3;
   border: 1px dashed var(--gold-primary);
@@ -302,9 +312,16 @@ button:hover {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 155px;
-  width: 100%;
+  
+  width: 175px !important;
+  min-width: 175px !important;
+  max-width: 175px !important;
+  height: 155px !important;
+  min-height: 155px !important;
+  max-height: 155px !important;
+  
   box-sizing: border-box;
+  flex-shrink: 0;
 }
 
 /* --- Saal-Unterseite (Eingang & DJ) --- */
