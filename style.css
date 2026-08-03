@@ -155,13 +155,13 @@ button:hover {
   align-items: center;
   gap: 10px;
   width: 100%;
-  max-width: 580px; /* Passt die Breite exakt an die oberen Plätze an */
+  max-width: 580px;
 }
 
 .braut-reihe {
   display: flex;
   gap: 6px;
-  flex-wrap: nowrap; /* Hält die obere/untere Reihe strictly in einer Zeile */
+  flex-wrap: nowrap;
   justify-content: center;
 }
 
@@ -201,19 +201,23 @@ button:hover {
 .tisch-reihe {
   display: flex;
   justify-content: center;
-  align-items: stretch;
+  align-items: center;
   gap: 14px;
 }
 
+/* FIX: Garantiert EXAKT gleiche Größe für alle Tische */
 .tisch-box {
   background: var(--table-bg);
   border-radius: 14px;
-  padding: 8px 6px;
+  padding: 10px 8px;
   border: 1px solid var(--border-subtle);
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
-  flex: 1;
-  max-width: 200px;
+  flex: 0 0 195px;  /* Feste Breite: 195px */
+  height: 165px;    /* Feste Höhe: 165px */
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .tisch-inhalt {
@@ -221,13 +225,15 @@ button:hover {
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  gap: 2px;
+  height: 100%;
+  gap: 4px;
 }
 
 .tisch-inhalt .seite {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  justify-content: space-evenly;
+  height: 100%;
   flex: 1;
   min-width: 0;
 }
@@ -237,16 +243,16 @@ button:hover {
   font-size: 22px;
   font-weight: 700;
   color: #a38f67;
-  padding: 0 3px;
+  padding: 0 2px;
   text-align: center;
 }
 
-/* --- Platz-Badges --- */
+/* --- Platz-Badges (Verhindert Textüberlauf) --- */
 .platz {
   display: flex;
   align-items: center;
   gap: 3px;
-  font-size: 10px;
+  font-size: 9.5px;
   color: #3f3f3f;
   background: #fcfbf9;
   padding: 2px 4px;
@@ -255,26 +261,30 @@ button:hover {
   white-space: nowrap;
   max-width: 100%;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .platz-nr {
   font-size: 8.5px;
   color: #b5a482;
   font-weight: 600;
+  flex-shrink: 0;
 }
 
 .platz-name {
   font-weight: 500;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .kind-star {
   font-size: 9px;
   color: #d4af37;
+  flex-shrink: 0;
 }
 
-/* --- Buffet & Ausschank Box --- */
+/* FIX: Buffet-Box exakt wie die Tische dimensioniert */
 .buffet-box {
   background: #fdfaf3;
   border: 1px dashed var(--gold-primary);
@@ -288,8 +298,9 @@ button:hover {
   display: flex;
   align-items: center;
   justify-content: center;
-  flex: 1;
-  max-width: 200px;
+  flex: 0 0 195px;  /* Gleiche Breite wie Tische */
+  height: 165px;    /* Gleiche Höhe wie Tische */
+  box-sizing: border-box;
 }
 
 /* --- Saal-Unterseite (Eingang & DJ) --- */
