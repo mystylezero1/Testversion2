@@ -131,6 +131,7 @@ button:hover {
   border: 1px solid var(--border-subtle);
   backdrop-filter: blur(10px);
   width: 100%;
+  overflow-x: auto;
 }
 
 /* --- Brauttisch Bereich --- */
@@ -186,35 +187,44 @@ button:hover {
   font-family: 'Plus Jakarta Sans', sans-serif;
 }
 
-/* --- Das 6-Spalten Saal-Grid --- */
+/* --- Linksbündige Tisch-Reihen & Feste Modulgrößen --- */
 #tische {
   display: flex;
   flex-direction: column;
   gap: 16px;
   width: 100%;
+  align-items: flex-start; /* Alle Reihen richten sich streng links aus */
 }
 
 .tisch-reihe {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr); /* 6 exakt gleiche Spalten über die volle Saalbreite */
+  display: flex;
+  justify-content: flex-start; /* Tische schließen innerhalb der Reihe links ab */
+  align-items: center;
   gap: 12px;
   width: 100%;
 }
 
-/* Identische Tischmaße */
+/* Identische Ausmaße für JEDEN Tisch */
 .tisch-box {
   background: var(--table-bg);
   border-radius: 14px;
   padding: 8px 6px;
   border: 1px solid var(--border-subtle);
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
-  height: 155px;
-  width: 100%;
+  
+  width: 180px !important;
+  min-width: 180px !important;
+  max-width: 180px !important;
+  height: 155px !important;
+  min-height: 155px !important;
+  max-height: 155px !important;
+  
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   justify-content: center;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .tisch-inhalt {
@@ -287,7 +297,7 @@ button:hover {
   flex-shrink: 0;
 }
 
-/* Ausschank & Buffet als 6. Element in Reihe 3 */
+/* Ausschank & Buffet (Genauso groß wie ein Tisch, sitzt als 6. Feld neben Tisch 12) */
 .buffet-box {
   background: #fdfaf3;
   border: 1px dashed var(--gold-primary);
@@ -301,9 +311,16 @@ button:hover {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 155px;
-  width: 100%;
+  
+  width: 180px !important;
+  min-width: 180px !important;
+  max-width: 180px !important;
+  height: 155px !important;
+  min-height: 155px !important;
+  max-height: 155px !important;
+  
   box-sizing: border-box;
+  flex-shrink: 0;
 }
 
 /* --- Saal-Unterseite (Eingang & DJ) --- */
