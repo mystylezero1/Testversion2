@@ -120,20 +120,20 @@ button:hover {
 /* --- Haupt-Saalplan Container --- */
 #overlay {
   width: 100%;
-  max-width: 1180px;
+  max-width: 1280px;
 }
 
 #saalplan {
   background: var(--card-bg);
   border-radius: 28px;
-  padding: 30px 20px;
+  padding: 30px 25px;
   box-shadow: var(--shadow-soft);
   border: 1px solid var(--border-subtle);
   backdrop-filter: blur(10px);
   width: 100%;
 }
 
-/* --- Brauttisch Bereich (Jetzt wieder gut lesbar!) --- */
+/* --- Brauttisch Bereich --- */
 #brautbereich {
   display: flex;
   justify-content: center;
@@ -186,30 +186,38 @@ button:hover {
   font-family: 'Plus Jakarta Sans', sans-serif;
 }
 
-/* --- Tisch Grid & Reihen --- */
+/* --- NEU: Hauptbereich mit Layout "Tische links, Buffet rechts" --- */
+.saal-hauptbereich {
+  display: flex;
+  gap: 20px;
+  align-items: stretch;
+  width: 100%;
+}
+
+/* Tischbereich links */
 #tische {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  width: 100%;
+  flex: 1; /* Nimmt den Hauptplatz ein */
 }
 
 .tisch-reihe {
   display: grid;
-  grid-template-columns: repeat(5, 1fr); /* Zwingt JEDE Reihe in exakt 5 gleich breite Spalten */
+  grid-template-columns: repeat(5, 1fr); /* Genau 5 gleichgroße Tische pro Reihe */
   gap: 12px;
   width: 100%;
 }
 
-/* Garantiert 100% identische Tischkästen */
+/* Exakte Tischkasten-Formate */
 .tisch-box {
   background: var(--table-bg);
   border-radius: 14px;
   padding: 8px 6px;
   border: 1px solid var(--border-subtle);
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
-  height: 155px; /* Feste Höhe */
-  width: 100%;   /* Nutzt die Grid-Spalte exakt aus */
+  height: 155px;
+  width: 100%;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -233,10 +241,9 @@ button:hover {
   height: 100%;
   flex: 1;
   min-width: 0;
-  overflow-y: auto; /* Falls an einen Tisch doch mal 15 Personen kommen */
+  overflow-y: auto;
 }
 
-/* Versteckt Scrollbalken in den Tischen für saubere Optik */
 .tisch-inhalt .seite::-webkit-scrollbar {
   display: none;
 }
@@ -288,23 +295,23 @@ button:hover {
   flex-shrink: 0;
 }
 
-/* Buffet-Box fügt sich perfekt ins 5er Grid ein */
+/* NEU: Ausschank & Buffet als eigener Steh-Block RECHTS NEBEN den Tischen */
 .buffet-box {
   background: #fdfaf3;
   border: 1px dashed var(--gold-primary);
-  border-radius: 14px;
-  padding: 10px;
+  border-radius: 18px;
+  padding: 20px 15px;
   text-align: center;
   color: #8c764d;
   font-family: 'Cormorant Garamond', serif;
   font-weight: 700;
-  font-size: 15px;
+  font-size: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 155px;
-  width: 100%;
+  width: 180px; /* Feste, elegante Breite rechts */
   box-sizing: border-box;
+  flex-shrink: 0;
 }
 
 /* --- Saal-Unterseite (Eingang & DJ) --- */
