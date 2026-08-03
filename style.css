@@ -29,7 +29,6 @@ body {
   padding: 20px;
 }
 
-/* --- Sichtbarkeit --- */
 .hidden {
   display: none !important;
 }
@@ -118,10 +117,6 @@ button:hover {
   width: 100%;
 }
 
-.btn-secondary:hover {
-  background: #e6dcbf;
-}
-
 /* --- Haupt-Saalplan Container --- */
 #overlay {
   width: 100%;
@@ -136,10 +131,9 @@ button:hover {
   border: 1px solid var(--border-subtle);
   backdrop-filter: blur(10px);
   width: 100%;
-  box-sizing: border-box;
 }
 
-/* --- Brauttisch Bereich --- */
+/* --- Brauttisch Bereich (Jetzt wieder gut lesbar!) --- */
 #brautbereich {
   display: flex;
   justify-content: center;
@@ -149,22 +143,22 @@ button:hover {
 #brauttisch {
   background: var(--table-bg);
   border-radius: 18px;
-  padding: 12px 20px;
+  padding: 14px 20px;
   border: 1px solid var(--border-subtle);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   width: 100%;
-  max-width: 580px;
+  max-width: 620px;
 }
 
 .braut-reihe {
   display: flex;
   gap: 6px;
-  flex-wrap: nowrap;
   justify-content: center;
+  width: 100%;
 }
 
 .braut-platte {
@@ -172,14 +166,14 @@ button:hover {
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: 6px 16px;
+  padding: 8px 20px;
   background: #fdfbf7;
   border: 1px dashed var(--gold-primary);
   border-radius: 10px;
   font-family: 'Cormorant Garamond', serif;
   font-weight: 700;
   color: #8c764d;
-  font-size: 19px;
+  font-size: 20px;
 }
 
 .tisch-tag {
@@ -190,7 +184,6 @@ button:hover {
   border-radius: 5px;
   color: #8c764d;
   font-family: 'Plus Jakarta Sans', sans-serif;
-  letter-spacing: 0.5px;
 }
 
 /* --- Tisch Grid & Reihen --- */
@@ -202,29 +195,26 @@ button:hover {
 }
 
 .tisch-reihe {
-  display: flex;
-  justify-content: space-between;
-  align-items: stretch;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr); /* Zwingt JEDE Reihe in exakt 5 gleich breite Spalten */
+  gap: 12px;
   width: 100%;
-  gap: 10px;
 }
 
-/* FIX: Sauberes Verhalten ohne Überlappungen */
+/* Garantiert 100% identische Tischkästen */
 .tisch-box {
   background: var(--table-bg);
   border-radius: 14px;
   padding: 8px 6px;
   border: 1px solid var(--border-subtle);
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
-  
-  flex: 1 1 0px;       /* Verteilt den Platz in der Reihe exakt gleichmäßig */
-  min-width: 0;        /* Verhindert Overflow/Quetschen in Flexbox */
-  height: 160px;       /* Garantiert exakt gleiche Höhe für alle Tische */
-  
+  height: 155px; /* Feste Höhe */
+  width: 100%;   /* Nutzt die Grid-Spalte exakt aus */
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  overflow: hidden;
 }
 
 .tisch-inhalt {
@@ -243,6 +233,12 @@ button:hover {
   height: 100%;
   flex: 1;
   min-width: 0;
+  overflow-y: auto; /* Falls an einen Tisch doch mal 15 Personen kommen */
+}
+
+/* Versteckt Scrollbalken in den Tischen für saubere Optik */
+.tisch-inhalt .seite::-webkit-scrollbar {
+  display: none;
 }
 
 .tisch-label {
@@ -259,11 +255,11 @@ button:hover {
 .platz {
   display: flex;
   align-items: center;
-  gap: 2px;
-  font-size: 8.5px;
+  gap: 3px;
+  font-size: 10px;
   color: #3f3f3f;
   background: #fcfbf9;
-  padding: 2px 3px;
+  padding: 2px 4px;
   border-radius: 4px;
   border: 1px solid #f0eae1;
   white-space: nowrap;
@@ -273,7 +269,7 @@ button:hover {
 }
 
 .platz-nr {
-  font-size: 8px;
+  font-size: 8.5px;
   color: #b5a482;
   font-weight: 600;
   flex-shrink: 0;
@@ -287,12 +283,12 @@ button:hover {
 }
 
 .kind-star {
-  font-size: 8.5px;
+  font-size: 9px;
   color: #d4af37;
   flex-shrink: 0;
 }
 
-/* Buffet-Box exakt wie die Tische dimensioniert */
+/* Buffet-Box fügt sich perfekt ins 5er Grid ein */
 .buffet-box {
   background: #fdfaf3;
   border: 1px dashed var(--gold-primary);
@@ -306,10 +302,8 @@ button:hover {
   display: flex;
   align-items: center;
   justify-content: center;
-  
-  flex: 1 1 0px;
-  min-width: 0;
-  height: 160px;
+  height: 155px;
+  width: 100%;
   box-sizing: border-box;
 }
 
@@ -333,8 +327,8 @@ button:hover {
   gap: 8px;
 }
 
-.eingang { flex: 1; max-width: 160px; }
-.dj { flex: 3; }
+.eingang { flex: 1; }
+.dj { flex: 4; }
 
 /* --- Search Highlighting --- */
 .highlight {
