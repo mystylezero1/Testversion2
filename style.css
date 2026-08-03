@@ -191,29 +191,32 @@ button:hover {
   letter-spacing: 0.5px;
 }
 
-/* --- Tisch Grid & Reihen --- */
+/* --- Tisch Grid & Ausrichtung --- */
 #tische {
   display: flex;
   flex-direction: column;
   gap: 18px;
+  width: 100%;
 }
 
 .tisch-reihe {
   display: flex;
-  justify-content: center;
+  justify-content: space-between; /* Verteilt Tische gleichmäßig von Links nach Rechts */
   align-items: center;
-  gap: 14px;
+  width: 100%;
+  gap: 12px;
 }
 
-/* FIX: Garantiert EXAKT gleiche Größe für alle Tische */
+/* Identische Größe & Ausrichtung für alle Tische */
 .tisch-box {
   background: var(--table-bg);
   border-radius: 14px;
   padding: 10px 8px;
   border: 1px solid var(--border-subtle);
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
-  flex: 0 0 195px;  /* Feste Breite: 195px */
-  height: 165px;    /* Feste Höhe: 165px */
+  flex: 1 1 0px;      /* Gleichmäßige Breitenverteilung */
+  max-width: 200px;   /* Verhindert Überdehnung */
+  height: 165px;      /* Feste, identische Höhe für jeden Tisch */
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -247,7 +250,7 @@ button:hover {
   text-align: center;
 }
 
-/* --- Platz-Badges (Verhindert Textüberlauf) --- */
+/* --- Platz-Badges --- */
 .platz {
   display: flex;
   align-items: center;
@@ -284,7 +287,7 @@ button:hover {
   flex-shrink: 0;
 }
 
-/* FIX: Buffet-Box exakt wie die Tische dimensioniert */
+/* Buffet-Box exakt wie die Tische dimensioniert */
 .buffet-box {
   background: #fdfaf3;
   border: 1px dashed var(--gold-primary);
@@ -298,8 +301,9 @@ button:hover {
   display: flex;
   align-items: center;
   justify-content: center;
-  flex: 0 0 195px;  /* Gleiche Breite wie Tische */
-  height: 165px;    /* Gleiche Höhe wie Tische */
+  flex: 1 1 0px;
+  max-width: 200px;
+  height: 165px;
   box-sizing: border-box;
 }
 
