@@ -11,7 +11,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   
+  <!-- Canvas Confetti & Excel (SheetJS) Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 
@@ -35,6 +37,7 @@
   <div id="overlay" class="hidden">
     <div id="saalplan">
       
+      <!-- Sprechblase / Treffer-Benachrichtigung -->
       <div id="speech" class="speech hidden"></div>
 
       <!-- Brauttisch-Bereich -->
@@ -42,10 +45,10 @@
         <div id="brauttisch"></div>
       </div>
 
-      <!-- Reguläre Tische -->
+      <!-- Reguläre Tische (wird dynmaisch über app.js befüllt) -->
       <div id="tische"></div>
 
-      <!-- Unterer Bereich -->
+      <!-- Unterer Bereich (Eingang, DJ & Tanzfläche) -->
       <div class="saal-unten">
         <div class="eingang">🚪 Eingang</div>
         <div class="dj">🎧 DJ &amp; Tanzfläche</div>
@@ -112,10 +115,10 @@
           </form>
         </div>
 
-        <!-- Tab 3: Aktionen -->
+        <!-- Tab 3: Aktionen & Export -->
         <div id="actionsTab" class="tab-content hidden">
           <div class="admin-actions-grid" style="display: flex; gap: 10px; margin-top: 15px;">
-            <button id="exportJsonBtn">📥 JSON Exportieren</button>
+            <button id="exportJsonBtn">📊 Excel Exportieren (.xlsx)</button>
             <button id="printPlanBtn">🖨️ Saalplan drucken</button>
           </div>
         </div>
@@ -129,8 +132,180 @@
 
   <audio id="ding" src="ding.mp3" preload="auto"></audio>
 
+  <!-- Inlined JSON Data als direkter Fallback -->
+  <script type="application/json" id="data-json">
+  [
+    {"tisch": "Braut", "platz": 1, "name": "Anne", "isKind": false},
+    {"tisch": "Braut", "platz": 2, "name": "Felix", "isKind": false},
+    {"tisch": "Braut", "platz": 3, "name": "Dino", "isKind": false},
+    {"tisch": "Braut", "platz": 4, "name": "Anja", "isKind": false},
+    {"tisch": "Braut", "platz": 5, "name": "Toni", "isKind": false},
+    {"tisch": "Braut", "platz": 6, "name": "Vito", "isKind": false},
+    {"tisch": "Braut", "platz": 7, "name": "Dani", "isKind": false},
+    {"tisch": "Braut", "platz": 9, "name": "Günther", "isKind": false},
+    {"tisch": "Braut", "platz": 10, "name": "Erika", "isKind": false},
+    {"tisch": "Braut", "platz": 11, "name": "Brigitte", "isKind": false},
+    {"tisch": "Braut", "platz": 12, "name": "Peter", "isKind": false},
+    {"tisch": "Braut", "platz": 13, "name": "Ingrid", "isKind": false},
+    {"tisch": "Braut", "platz": 14, "name": "Roswitha", "isKind": false},
+
+    {"tisch": 3, "platz": 15, "name": "Heike", "isKind": false},
+    {"tisch": 3, "platz": 16, "name": "Michael", "isKind": false},
+    {"tisch": 3, "platz": 17, "name": "Flo", "isKind": false},
+    {"tisch": 3, "platz": 18, "name": "Jutta", "isKind": false},
+    {"tisch": 3, "platz": 19, "name": "Christian", "isKind": false},
+    {"tisch": 3, "platz": 20, "name": "Malika", "isKind": false},
+
+    {"tisch": 4, "platz": 21, "name": "Luca", "isKind": true},
+    {"tisch": 4, "platz": 22, "name": "Sebastian", "isKind": false},
+    {"tisch": 4, "platz": 23, "name": "Melissa", "isKind": false},
+    {"tisch": 4, "platz": 24, "name": "Gusti", "isKind": false},
+    {"tisch": 4, "platz": 25, "name": "Celina", "isKind": false},
+    {"tisch": 4, "platz": 26, "name": "Noah", "isKind": true},
+
+    {"tisch": 5, "platz": 27, "name": "Cosetta", "isKind": false},
+    {"tisch": 5, "platz": 28, "name": "Beppo", "isKind": false},
+    {"tisch": 5, "platz": 29, "name": "Giovanni", "isKind": false},
+    {"tisch": 5, "platz": 30, "name": "Laura", "isKind": false},
+    {"tisch": 5, "platz": 31, "name": "Patrick", "isKind": false},
+    {"tisch": 5, "platz": 32, "name": "Diana", "isKind": false},
+    {"tisch": 5, "platz": 33, "name": "Nadja", "isKind": false},
+    {"tisch": 5, "platz": 34, "name": "Gino", "isKind": false},
+    {"tisch": 5, "platz": 35, "name": "Enzo", "isKind": false},
+    {"tisch": 5, "platz": 36, "name": "Pauline", "isKind": false},
+    {"tisch": 5, "platz": 37, "name": "Luca", "isKind": true},
+    {"tisch": 5, "platz": 38, "name": "Timo", "isKind": false},
+    {"tisch": 5, "platz": 39, "name": "Julia", "isKind": false},
+
+    {"tisch": 6, "platz": 40, "name": "Sven", "isKind": false},
+    {"tisch": 6, "platz": 41, "name": "Phil", "isKind": false},
+    {"tisch": 6, "platz": 42, "name": "Samuel", "isKind": false},
+    {"tisch": 6, "platz": 43, "name": "Lars", "isKind": false},
+    {"tisch": 6, "platz": 44, "name": "Melanie", "isKind": false},
+    {"tisch": 6, "platz": 45, "name": "Michelle", "isKind": false},
+
+    {"tisch": 7, "platz": 46, "name": "Max", "isKind": false},
+    {"tisch": 7, "platz": 47, "name": "Lena", "isKind": false},
+    {"tisch": 7, "platz": 48, "name": "Bernd", "isKind": false},
+    {"tisch": 7, "platz": 49, "name": "Manu", "isKind": false},
+    {"tisch": 7, "platz": 50, "name": "Axel", "isKind": false},
+    {"tisch": 7, "platz": 51, "name": "Manuela", "isKind": false},
+
+    {"tisch": 8, "platz": 52, "name": "Max", "isKind": false},
+    {"tisch": 8, "platz": 53, "name": "Caro", "isKind": false},
+    {"tisch": 8, "platz": 54, "name": "Flo", "isKind": false},
+    {"tisch": 8, "platz": 54.1, "name": "Eva", "isKind": false},
+    {"tisch": 8, "platz": 55, "name": "Alisa", "isKind": false},
+    {"tisch": 8, "platz": 56, "name": "Laurin", "isKind": false},
+    {"tisch": 8, "platz": 57, "name": "Christian", "isKind": false},
+    {"tisch": 8, "platz": 58, "name": "Eli", "isKind": false},
+    {"tisch": 8, "platz": 59, "name": "Tami", "isKind": true},
+    {"tisch": 8, "platz": 60, "name": "Rene", "isKind": false},
+
+    {"tisch": 9, "platz": 61, "name": "Jenny", "isKind": false},
+    {"tisch": 9, "platz": 62, "name": "Alex", "isKind": false},
+    {"tisch": 9, "platz": 63, "name": "Elio", "isKind": true},
+    {"tisch": 9, "platz": 64, "name": "Toni", "isKind": false},
+    {"tisch": 9, "platz": 65, "name": "Vanessa", "isKind": false},
+
+    {"tisch": 10, "platz": 66, "name": "Max", "isKind": false},
+    {"tisch": 10, "platz": 67, "name": "Theo", "isKind": true},
+    {"tisch": 10, "platz": 68, "name": "Eva", "isKind": false},
+    {"tisch": 10, "platz": 69, "name": "Matze", "isKind": false},
+    {"tisch": 10, "platz": 70, "name": "Fred", "isKind": false},
+    {"tisch": 10, "platz": 71, "name": "Matti", "isKind": true},
+    {"tisch": 10, "platz": 72, "name": "Katrin", "isKind": false},
+    {"tisch": 10, "platz": 73, "name": "Rob", "isKind": false},
+    {"tisch": 10, "platz": 74, "name": "Jule", "isKind": false},
+    {"tisch": 10, "platz": 75, "name": "Dominique", "isKind": false},
+    {"tisch": 10, "platz": 76, "name": "Christoph", "isKind": false},
+
+    {"tisch": 11, "platz": 70.1, "name": "Fred", "isKind": false},
+    {"tisch": 11, "platz": 71.1, "name": "Matti", "isKind": true},
+    {"tisch": 11, "platz": 77, "name": "Fabi", "isKind": false},
+    {"tisch": 11, "platz": 78, "name": "Juri", "isKind": false},
+    {"tisch": 11, "platz": 79, "name": "Alba", "isKind": false},
+    {"tisch": 11, "platz": 80, "name": "Hannah", "isKind": false},
+    {"tisch": 11, "platz": 81, "name": "Georg", "isKind": false},
+
+    {"tisch": 12, "platz": 82, "name": "Patrick", "isKind": false},
+    {"tisch": 12, "platz": 83, "name": "Charlotte", "isKind": false},
+    {"tisch": 12, "platz": 84, "name": "Mathilde", "isKind": true},
+    {"tisch": 12, "platz": 85, "name": "Tom", "isKind": false},
+    {"tisch": 12, "platz": 86, "name": "Frauke", "isKind": false},
+    {"tisch": 12, "platz": 87, "name": "Isi", "isKind": false},
+    {"tisch": 12, "platz": 88, "name": "Sefa", "isKind": false},
+    {"tisch": 12, "platz": 89, "name": "Mehmet", "isKind": false},
+    {"tisch": 12, "platz": 90, "name": "Nilay", "isKind": false},
+
+    {"tisch": 13, "platz": 83.1, "name": "Charlotte", "isKind": false},
+    {"tisch": 13, "platz": 84.1, "name": "Mathilde", "isKind": true},
+    {"tisch": 13, "platz": 88.1, "name": "Sefa", "isKind": false},
+    {"tisch": 13, "platz": 89.1, "name": "Mehmet", "isKind": false},
+    {"tisch": 13, "platz": 91, "name": "Ines", "isKind": false},
+    {"tisch": 13, "platz": 92, "name": "Jonas", "isKind": false},
+
+    {"tisch": 14, "platz": 93, "name": "Mira", "isKind": false},
+    {"tisch": 14, "platz": 94, "name": "Fabian", "isKind": false},
+    {"tisch": 14, "platz": 95, "name": "Julia", "isKind": false},
+    {"tisch": 14, "platz": 96, "name": "Sebastian", "isKind": false},
+    {"tisch": 14, "platz": 97, "name": "Matteo", "isKind": false},
+    {"tisch": 14, "platz": 98, "name": "Melanie", "isKind": false},
+
+    {"tisch": 15, "platz": 99, "name": "Dani", "isKind": false},
+    {"tisch": 15, "platz": 100, "name": "Marco", "isKind": false},
+    {"tisch": 15, "platz": 101, "name": "Marina", "isKind": false},
+    {"tisch": 15, "platz": 102, "name": "Michael", "isKind": false},
+    {"tisch": 15, "platz": 103, "name": "Miriam", "isKind": false},
+    {"tisch": 15, "platz": 104, "name": "Flo", "isKind": false},
+    {"tisch": 15, "platz": 105, "name": "Philipp", "isKind": false},
+    {"tisch": 15, "platz": 106, "name": "Marcel", "isKind": false},
+
+    {"tisch": 16, "platz": 107, "name": "Nele", "isKind": false},
+    {"tisch": 16, "platz": 108, "name": "Elena", "isKind": false},
+    {"tisch": 16, "platz": 109, "name": "Sebastian", "isKind": false},
+    {"tisch": 16, "platz": 110, "name": "Marie", "isKind": false},
+    {"tisch": 16, "platz": 111, "name": "Jo", "isKind": false},
+    {"tisch": 16, "platz": 114, "name": "Anton", "isKind": false},
+    {"tisch": 16, "platz": 115, "name": "Theo", "isKind": true},
+
+    {"tisch": 17, "platz": 112, "name": "Sandra", "isKind": false},
+    {"tisch": 17, "platz": 113, "name": "Georg", "isKind": false},
+    {"tisch": 17, "platz": 118, "name": "Jonah", "isKind": false},
+    {"tisch": 17, "platz": 119, "name": "Lou", "isKind": false},
+    {"tisch": 17, "platz": 120, "name": "Ellie", "isKind": false},
+    {"tisch": 17, "platz": 121, "name": "Lennart", "isKind": false},
+    {"tisch": 17, "platz": 127, "name": "Julia", "isKind": false},
+
+    {"tisch": 18, "platz": 128, "name": "Liv", "isKind": false},
+    {"tisch": 18, "platz": 129, "name": "Fabi", "isKind": false},
+    {"tisch": 18, "platz": 130, "name": "Linus", "isKind": false},
+    {"tisch": 18, "platz": 131, "name": "Elias", "isKind": false},
+    {"tisch": 18, "platz": 134, "name": "Theo", "isKind": false},
+    {"tisch": 18, "platz": 135, "name": "Timo", "isKind": false},
+
+    {"tisch": 19, "platz": 137, "name": "Rainer", "isKind": false},
+    {"tisch": 19, "platz": 138, "name": "Verena", "isKind": false},
+    {"tisch": 19, "platz": 139, "name": "Caro", "isKind": false},
+    {"tisch": 19, "platz": 140, "name": "Phillip", "isKind": false},
+    {"tisch": 19, "platz": 141, "name": "Alex", "isKind": false},
+    {"tisch": 19, "platz": 142, "name": "Matthäus", "isKind": false},
+    {"tisch": 19, "platz": 143, "name": "Felix", "isKind": false},
+
+    {"tisch": 20, "platz": 144, "name": "Jonas", "isKind": false},
+    {"tisch": 20, "platz": 145, "name": "Anton", "isKind": false},
+    {"tisch": 20, "platz": 146, "name": "Clara", "isKind": false},
+    {"tisch": 20, "platz": 147, "name": "Frauke", "isKind": false},
+    {"tisch": 20, "platz": 148, "name": "Stefan", "isKind": false},
+    {"tisch": 20, "platz": 149, "name": "Sophia", "isKind": false},
+    {"tisch": 20, "platz": 150, "name": "Emil", "isKind": true},
+    {"tisch": 20, "platz": 151, "name": "Emma", "isKind": true},
+    {"tisch": 20, "platz": 152, "name": "Chrissi", "isKind": false},
+    {"tisch": 20, "platz": 153, "name": "David", "isKind": false}
+  ]
+  </script>
+
   <script src="config.js"></script>
-  <script src="data.json" type="application/json" id="data-json"></script>
   <script src="app.js"></script>
   <script src="admin.js"></script>
 </body>
