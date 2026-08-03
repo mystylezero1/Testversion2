@@ -8,96 +8,89 @@ document.addEventListener("DOMContentLoaded", () => {
   initSearchEvents();
 });
 
-// --- Daten aus data.json laden & Plan aufbauen ---
+// --- Daten laden & flexibel Rendern ---
 async function loadData() {
   try {
     const response = await fetch("data.json");
     if (!response.ok) throw new Error("Netzwerk-Antwort war nicht ok");
     saalData = await response.json();
-    renderSaalplan(saalData);
+    
+    // Prüfen, ob eine eigene Render-Funktion existiert, sonst Standard nutzen
+    if (typeof renderCustomPlan === "function") {
+      renderCustomPlan(saalData);
+    } else {
+      renderSaalplanFlexibel(saalData);
+    }
   } catch (error) {
     console.error("Fehler beim Laden der Sitzplan-Daten:", error);
   }
 }
 
-// --- DOM Rendering des Saalplans ---
-function renderSaalplan(data) {
+function renderSaalplanFlexibel(data) {
   const tischeContainer = document.getElementById("tische");
   if (!tischeContainer) return;
 
+  // Falls die Tische bereits fest im HTML stehen oder anders gerendert werden,
+  // lassen wir das HTML unangetastet, wenn kein tische-Array übergeben wurde.
+  if (!data || (!data.tische && !data.reihen && !Array.isArray(data))) return;
+
   tischeContainer.innerHTML = "";
 
-  // Brauttisch rendern (falls im HTML nicht statisch)
-  renderBrauttisch(data.brauttisch);
-
-  // Reguläre Tische in Reihen aufbauen
-  if (data.reihen && Array.isArray(data.reihen)) {
-    data.reihen.forEach((reihe) => {
-      const reiheDiv = document.createElement("div");
-      reiheDiv.className = "tisch-reihe";
-
-      reihe.tische.forEach((tisch) => {
-        if (tisch.typ === "buffet") {
-          // Buffet / Ausschank Modul
-          const buffetDiv = document.createElement("div");
-          buffetDiv.className = "buffet-box";
-          buffetDiv.innerHTML = `➔<br>${tisch.label || "Ausschank & Buffet"}`;
-          reiheDiv.appendChild(buffetDiv);
-        } else {
-          // Normaler Tisch
-          const tischBox = createTischElement(tisch);
-          reiheDiv.appendChild(tischBox);
-        }
-      });
-
-      tischeContainer.appendChild(reiheDiv);
-    });
+  // Datenformat vereinheitlichen (egal ob Array oder Objekt)
+  let tischeListe = [];
+  if (Array.isArray(data)) {
+    tischeListe = data;
+  } else if (data.tische && Array.isArray(data.tische)) {
+    tischeListe = data.tische;
   }
-}
 
-function renderBrauttisch(brautData) {
-  const brautContainer = document.getElementById("brauttisch");
-  if (!brautContainer || !brautData) return;
+  if (tischeListe.length > 0) {
+    // Tische in 5er/6er Reihen aufteilen
+    // Reihe 1: T1-5, Reihe 2: T6-10, Reihe 3: T11-12 + Buffet, Reihe 4: T13-20
+    let aktuelleReihe = document.createElement("div");
+    aktuelleReihe.className = "tisch-reihe";
 
-  // Render-Logik für Brauttisch Plätze
-  const plaetzeContainer = brautContainer.querySelector(".braut-reihe") || brautContainer;
-  if (brautData.gaeste && Array.isArray(brautData.gaeste)) {
-    plaetzeContainer.innerHTML = brautData.gaeste
-      .map(
-        (g) => `
-      <div class="platz">
-        <span class="platz-nr">${g.sitz || ""}</span>
-        <span class="platz-name">${g.name}</span>
-        ${g.kind ? '<span class="kind-star">★</span>' : ""}
-      </div>
-    `
-      )
-      .join("");
+    tischeListe.forEach((tisch, index) => {
+      const tischBox = createTischElement(tisch);
+      aktuelleReihe.appendChild(tischBox);
+
+      // Nach Tisch 12 (in Reihe 3) das Buffet anheften
+      if (tisch.id == 12 || tisch.label == "Tisch 12") {
+        const buffetDiv = document.createElement("div");
+        buffetDiv.className = "buffet-box";
+        buffetDiv.innerHTML = "➔<br>Ausschank & Buffet";
+        aktuelleReihe.appendChild(buffetDiv);
+      }
+
+      // Neue Reihe alle 5 Tische anfangen (oder wenn Reihe voll ist)
+      if ((index + 1) % 5 === 0 || index === tischeListe.length - 1) {
+        tischeContainer.appendChild(aktuelleReihe);
+        aktuelleReihe = document.createElement("div");
+        aktuelleReihe.className = "tisch-reihe";
+      }
+    });
   }
 }
 
 function createTischElement(tisch) {
   const tischBox = document.createElement("div");
   tischBox.className = "tisch-box";
-  tischBox.dataset.tischId = tisch.id;
+  tischBox.dataset.tischId = tisch.id || "";
 
   const inhalt = document.createElement("div");
   inhalt.className = "tisch-inhalt";
 
-  // Links sitzende Gäste
   const linksDiv = document.createElement("div");
   linksDiv.className = "seite links";
-  (tisch.links || []).forEach((g) => linksDiv.appendChild(createPlatzElement(g)));
+  (tisch.links || tisch.gaesteLinks || []).forEach(g => linksDiv.appendChild(createPlatzElement(g)));
 
-  // Tisch Label
   const labelDiv = document.createElement("div");
   labelDiv.className = "tisch-label";
-  labelDiv.innerText = tisch.label || `Tisch ${tisch.id}`;
+  labelDiv.innerText = tisch.label || `Tisch ${tisch.id || ""}`;
 
-  // Rechts sitzende Gäste
   const rechtsDiv = document.createElement("div");
   rechtsDiv.className = "seite rechts";
-  (tisch.rechts || []).forEach((g) => rechtsDiv.appendChild(createPlatzElement(g)));
+  (tisch.rechts || tisch.gaesteRechts || []).forEach(g => rechtsDiv.appendChild(createPlatzElement(g)));
 
   inhalt.appendChild(linksDiv);
   inhalt.appendChild(labelDiv);
@@ -110,10 +103,14 @@ function createTischElement(tisch) {
 function createPlatzElement(gast) {
   const platz = document.createElement("div");
   platz.className = "platz";
+  const name = typeof gast === "string" ? gast : (gast.name || "");
+  const sitz = gast.sitz || "";
+  const istKind = gast.kind ? '<span class="kind-star">★</span>' : "";
+
   platz.innerHTML = `
-    <span class="platz-nr">${gast.sitz || ""}</span>
-    <span class="platz-name">${gast.name}</span>
-    ${gast.kind ? '<span class="kind-star">★</span>' : ""}
+    <span class="platz-nr">${sitz}</span>
+    <span class="platz-name">${name}</span>
+    ${istKind}
   `;
   return platz;
 }
