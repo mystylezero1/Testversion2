@@ -310,3 +310,44 @@ th, td { padding: 10px; border-bottom: 1px solid var(--border-subtle); }
     display: none !important;
   }
 }
+/* Layout für Tisch-Reihen */
+#tische {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+.tisch-reihe {
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  gap: 14px;
+  width: 100%;
+  flex-wrap: nowrap;
+}
+
+/* Anpassung Tisch-Box */
+.tisch-box {
+  flex: 1;
+  min-width: 180px;
+}
+
+/* Ausschank & Buffet Spezial-Box */
+.buffet-box {
+  flex: 1;
+  min-width: 140px;
+  background: var(--accent-gold-light);
+  border: 1px solid var(--accent-gold);
+  border-radius: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--accent-gold);
+  padding: 10px;
+  box-shadow: var(--shadow-soft);
+}
