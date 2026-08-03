@@ -1,95 +1,101 @@
-/* --- Tisch-Boxen & Layout --- */
-.tisch-reihe {
+/* --- Brauttisch Bereich (Saubere Zentrierung) --- */
+#brautbereich {
   display: flex;
   justify-content: center;
-  align-items: center;
-  gap: 15px;
-  margin-bottom: 20px;
+  margin-bottom: 25px;
 }
 
+#brauttisch {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 15px 20px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(220, 210, 195, 0.4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  max-width: 650px;
+}
+
+.braut-reihe {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+.braut-platte {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 6px 15px;
+  background: #fdfbf7;
+  border: 1px dashed #d4af37;
+  border-radius: 8px;
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 700;
+  color: #937325;
+  font-size: 16px;
+}
+
+.tisch-tag {
+  font-size: 10px;
+  background: #ffffff;
+  border: 1px solid #e2d7c5;
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: #8c764d;
+}
+
+/* --- Tisch Boxen (Kein Überlappen mehr!) --- */
 .tisch-box {
   background: #ffffff;
   border-radius: 12px;
-  padding: 12px;
+  padding: 10px 8px; /* Kompakteres Padding */
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
   border: 1px solid rgba(220, 210, 195, 0.4);
-  min-width: 140px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
 }
 
-.tisch-box:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
-}
-
-/* Inhalte in der Tischbox: 2 Spalten (links/rechts) + Nummer in der Mitte */
 .tisch-inhalt {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  position: relative;
+  gap: 4px; /* Engerer Abstand zwischen den Spalten */
 }
 
 .tisch-inhalt .seite {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  flex: 1;
+  gap: 4px;
+  min-width: 0; /* Verhindert das Rausragen aus dem Container */
 }
 
-/* Zentrierte Tischnummer */
-.tisch-label {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 22px;
-  font-weight: 700;
-  color: #a38f67;
-  padding: 0 6px;
-  user-select: none;
-}
-
-/* --- Platz-Styling (Dezent & Luftig) --- */
+/* --- Platz-Badges (Kompakt & Sauber abgesichert) --- */
 .platz {
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: 11px;
+  gap: 3px;
+  font-size: 10.5px;
   color: #4a4a4a;
   background: #fcfbf9;
-  padding: 3px 6px;
-  border-radius: 6px;
+  padding: 2px 5px;
+  border-radius: 5px;
   border: 1px solid #f0eae1;
   white-space: nowrap;
+  box-sizing: border-box;
 }
 
 .platz-nr {
-  font-size: 9px;
+  font-size: 8.5px;
   color: #b5a482;
   font-weight: 600;
 }
 
 .platz-name {
   font-weight: 500;
-}
-
-.kind-star {
-  font-size: 10px;
-}
-
-/* --- Buffet Box (Edles Gold-Matching) --- */
-.buffet-box {
-  background: #fdfaf3;
-  border: 1px dashed #d4af37;
-  border-radius: 12px;
-  padding: 15px 10px;
-  text-align: center;
-  color: #937325;
-  font-family: 'Cormorant Garamond', serif;
-  font-weight: 600;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 120px;
-  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.08);
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
