@@ -120,7 +120,7 @@ button:hover {
 /* --- Haupt-Saalplan Container --- */
 #overlay {
   width: 100%;
-  max-width: 1280px;
+  max-width: 1320px;
 }
 
 #saalplan {
@@ -131,7 +131,6 @@ button:hover {
   border: 1px solid var(--border-subtle);
   backdrop-filter: blur(10px);
   width: 100%;
-  overflow-x: auto; /* Sicherheitshalber bei kleineren Monitoren */
 }
 
 /* --- Brauttisch Bereich --- */
@@ -187,45 +186,35 @@ button:hover {
   font-family: 'Plus Jakarta Sans', sans-serif;
 }
 
-/* --- Tisch Reihen & Garantierte Einheitlichkeit --- */
+/* --- Das 6-Spalten Saal-Grid --- */
 #tische {
   display: flex;
   flex-direction: column;
   gap: 16px;
   width: 100%;
-  align-items: center;
 }
 
 .tisch-reihe {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr); /* 6 exakt gleiche Spalten über die volle Saalbreite */
+  gap: 12px;
   width: 100%;
 }
 
-/* RIGIDE REGEL: JEDER Tisch hat HAARGENAU dieselbe Größe */
+/* Identische Tischmaße */
 .tisch-box {
   background: var(--table-bg);
   border-radius: 14px;
   padding: 8px 6px;
   border: 1px solid var(--border-subtle);
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
-  
-  /* Unverrückbare feste Ausmaße */
-  width: 175px !important;
-  min-width: 175px !important;
-  max-width: 175px !important;
-  height: 155px !important;
-  min-height: 155px !important;
-  max-height: 155px !important;
-  
+  height: 155px;
+  width: 100%;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   justify-content: center;
   overflow: hidden;
-  flex-shrink: 0;
 }
 
 .tisch-inhalt {
@@ -298,7 +287,7 @@ button:hover {
   flex-shrink: 0;
 }
 
-/* EXAKT DIE GLEICHE GRÖSSE WIE DIE TISCHE: Ausschank & Buffet */
+/* Ausschank & Buffet als 6. Element in Reihe 3 */
 .buffet-box {
   background: #fdfaf3;
   border: 1px dashed var(--gold-primary);
@@ -312,16 +301,9 @@ button:hover {
   display: flex;
   align-items: center;
   justify-content: center;
-  
-  width: 175px !important;
-  min-width: 175px !important;
-  max-width: 175px !important;
-  height: 155px !important;
-  min-height: 155px !important;
-  max-height: 155px !important;
-  
+  height: 155px;
+  width: 100%;
   box-sizing: border-box;
-  flex-shrink: 0;
 }
 
 /* --- Saal-Unterseite (Eingang & DJ) --- */
@@ -345,7 +327,7 @@ button:hover {
 }
 
 .eingang { flex: 1; }
-.dj { flex: 4; }
+.dj { flex: 5; }
 
 /* --- Search Highlighting & Modals --- */
 .highlight {
