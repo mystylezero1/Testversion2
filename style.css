@@ -131,29 +131,31 @@ button:hover {
 #saalplan {
   background: var(--card-bg);
   border-radius: 28px;
-  padding: 35px;
+  padding: 30px 20px;
   box-shadow: var(--shadow-soft);
   border: 1px solid var(--border-subtle);
   backdrop-filter: blur(10px);
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* --- Brauttisch Bereich --- */
 #brautbereich {
   display: flex;
   justify-content: center;
-  margin-bottom: 30px;
+  margin-bottom: 25px;
 }
 
 #brauttisch {
   background: var(--table-bg);
   border-radius: 18px;
-  padding: 14px 20px;
+  padding: 12px 20px;
   border: 1px solid var(--border-subtle);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   width: 100%;
   max-width: 580px;
 }
@@ -191,32 +193,36 @@ button:hover {
   letter-spacing: 0.5px;
 }
 
-/* --- Tisch Grid & Ausrichtung --- */
+/* --- Tisch Grid & Reihen --- */
 #tische {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 16px;
   width: 100%;
 }
 
 .tisch-reihe {
   display: flex;
-  justify-content: space-between; /* Verteilt Tische gleichmäßig von Links nach Rechts */
+  justify-content: center; /* Zentriert die Reihe symmetrisch */
   align-items: center;
   width: 100%;
   gap: 12px;
 }
 
-/* Identische Größe & Ausrichtung für alle Tische */
+/* FIX: Garantiert EXAKT identische feste Maße für JEDEN Tisch */
 .tisch-box {
   background: var(--table-bg);
   border-radius: 14px;
-  padding: 10px 8px;
+  padding: 8px 6px;
   border: 1px solid var(--border-subtle);
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
-  flex: 1 1 0px;      /* Gleichmäßige Breitenverteilung */
-  max-width: 200px;   /* Verhindert Überdehnung */
-  height: 165px;      /* Feste, identische Höhe für jeden Tisch */
+  
+  /* Absolute Fixierung aller Tische auf identische Abmessungen */
+  width: 185px !important;
+  min-width: 185px !important;
+  max-width: 185px !important;
+  height: 160px !important;
+  
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -229,7 +235,7 @@ button:hover {
   justify-content: space-between;
   width: 100%;
   height: 100%;
-  gap: 4px;
+  gap: 2px;
 }
 
 .tisch-inhalt .seite {
@@ -243,32 +249,33 @@ button:hover {
 
 .tisch-label {
   font-family: 'Cormorant Garamond', serif;
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 700;
   color: #a38f67;
   padding: 0 2px;
   text-align: center;
+  flex-shrink: 0;
 }
 
 /* --- Platz-Badges --- */
 .platz {
   display: flex;
   align-items: center;
-  gap: 3px;
-  font-size: 9.5px;
+  gap: 2px;
+  font-size: 9px;
   color: #3f3f3f;
   background: #fcfbf9;
-  padding: 2px 4px;
-  border-radius: 5px;
+  padding: 2px 3px;
+  border-radius: 4px;
   border: 1px solid #f0eae1;
   white-space: nowrap;
-  max-width: 100%;
+  width: 100%;
   box-sizing: border-box;
   overflow: hidden;
 }
 
 .platz-nr {
-  font-size: 8.5px;
+  font-size: 8px;
   color: #b5a482;
   font-weight: 600;
   flex-shrink: 0;
@@ -282,12 +289,12 @@ button:hover {
 }
 
 .kind-star {
-  font-size: 9px;
+  font-size: 8.5px;
   color: #d4af37;
   flex-shrink: 0;
 }
 
-/* Buffet-Box exakt wie die Tische dimensioniert */
+/* FIX: Buffet-Box exakt wie die Tische dimensioniert */
 .buffet-box {
   background: #fdfaf3;
   border: 1px dashed var(--gold-primary);
@@ -301,9 +308,11 @@ button:hover {
   display: flex;
   align-items: center;
   justify-content: center;
-  flex: 1 1 0px;
-  max-width: 200px;
-  height: 165px;
+  
+  width: 185px !important;
+  min-width: 185px !important;
+  max-width: 185px !important;
+  height: 160px !important;
   box-sizing: border-box;
 }
 
