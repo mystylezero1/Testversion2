@@ -1,209 +1,280 @@
-// --- Globale Variablen ---
-let saalData = null;
-window.aktuellesSuchErgebnis = [];
+let gaeste = [];
+const soundMode = "fun";
 
-// --- Initialisierung ---
+// ----------------------------
+// Daten laden (mit Fallback)
+// ----------------------------
 document.addEventListener("DOMContentLoaded", () => {
-  loadData();
-  initSearchEvents();
+  const inlineData = document.getElementById("data-json");
+  if (inlineData && inlineData.textContent.trim()) {
+    try {
+      gaeste = JSON.parse(inlineData.textContent);
+      sitzplanErstellen();
+    } catch (e) {
+      console.warn("Inline JSON fehlerhaft, versuche fetch...");
+      loadViaFetch();
+    }
+  } else {
+    loadViaFetch();
+  }
+
+  initAppEvents();
 });
 
-// --- Daten laden & flexibel Rendern ---
-async function loadData() {
-  try {
-    const response = await fetch("data.json");
-    if (!response.ok) throw new Error("Netzwerk-Antwort war nicht ok");
-    saalData = await response.json();
-    
-    // Prüfen, ob eine eigene Render-Funktion existiert, sonst Standard nutzen
-    if (typeof renderCustomPlan === "function") {
-      renderCustomPlan(saalData);
-    } else {
-      renderSaalplanFlexibel(saalData);
-    }
-  } catch (error) {
-    console.error("Fehler beim Laden der Sitzplan-Daten:", error);
+function loadViaFetch() {
+  fetch("data.json")
+    .then(r => r.json())
+    .then(data => {
+      gaeste = data;
+      sitzplanErstellen();
+    })
+    .catch(err => console.error("Fehler beim Laden der Gästedaten:", err));
+}
+
+// ----------------------------
+// Events initialisieren
+// ----------------------------
+function initAppEvents() {
+  const findenBtn = document.getElementById("findenBtn");
+  const searchInput = document.getElementById("search");
+  const zeigePlanBtn = document.getElementById("zeigeGesamtenPlanBtn");
+  const neueSucheBtn = document.getElementById("neueSucheBtn");
+
+  if (findenBtn) findenBtn.addEventListener("click", sucheGast);
+  if (searchInput) {
+    searchInput.addEventListener("keydown", e => {
+      if (e.key === "Enter") sucheGast();
+    });
+  }
+
+  if (zeigePlanBtn) {
+    zeigePlanBtn.addEventListener("click", () => {
+      document.getElementById("welcome").classList.add("hidden");
+      document.getElementById("overlay").classList.remove("hidden");
+      document.getElementById("neueSucheBtn").classList.remove("hidden");
+    });
+  }
+
+  if (neueSucheBtn) {
+    neueSucheBtn.addEventListener("click", () => {
+      document.getElementById("overlay").classList.add("hidden");
+      document.getElementById("neueSucheBtn").classList.add("hidden");
+      document.getElementById("welcome").classList.remove("hidden");
+      document.getElementById("search").value = "";
+      document.getElementById("search").focus();
+    });
   }
 }
 
-function renderSaalplanFlexibel(data) {
+// ----------------------------
+// Sitzplan erstellen (4-Reihen Layout + Brauttisch & Buffet)
+// ----------------------------
+function sitzplanErstellen() {
+  const braut = document.getElementById("brauttisch");
   const tischeContainer = document.getElementById("tische");
-  if (!tischeContainer) return;
 
-  // Falls die Tische bereits fest im HTML stehen oder anders gerendert werden,
-  // lassen wir das HTML unangetastet, wenn kein tische-Array übergeben wurde.
-  if (!data || (!data.tische && !data.reihen && !Array.isArray(data))) return;
+  if (!braut || !tischeContainer) return;
 
+  braut.innerHTML = "";
   tischeContainer.innerHTML = "";
 
-  // Datenformat vereinheitlichen (egal ob Array oder Objekt)
-  let tischeListe = [];
-  if (Array.isArray(data)) {
-    tischeListe = data;
-  } else if (data.tische && Array.isArray(data.tische)) {
-    tischeListe = data.tische;
-  }
+  // 1. Brauttisch Aufteilung (Plätze <= 7 oben, Plätze > 7 unten)
+  const brautGaeste = gaeste.filter(g => String(g.tisch).toLowerCase() === "braut");
+  const brautOben = brautGaeste.filter(g => Number(g.platz) <= 7).sort((a,b) => a.platz - b.platz);
+  const brautUnten = brautGaeste.filter(g => Number(g.platz) > 7).sort((a,b) => a.platz - b.platz);
 
-  if (tischeListe.length > 0) {
-    // Tische in 5er/6er Reihen aufteilen
-    // Reihe 1: T1-5, Reihe 2: T6-10, Reihe 3: T11-12 + Buffet, Reihe 4: T13-20
-    let aktuelleReihe = document.createElement("div");
-    aktuelleReihe.className = "tisch-reihe";
-
-    tischeListe.forEach((tisch, index) => {
-      const tischBox = createTischElement(tisch);
-      aktuelleReihe.appendChild(tischBox);
-
-      // Nach Tisch 12 (in Reihe 3) das Buffet anheften
-      if (tisch.id == 12 || tisch.label == "Tisch 12") {
-        const buffetDiv = document.createElement("div");
-        buffetDiv.className = "buffet-box";
-        buffetDiv.innerHTML = "➔<br>Ausschank & Buffet";
-        aktuelleReihe.appendChild(buffetDiv);
-      }
-
-      // Neue Reihe alle 5 Tische anfangen (oder wenn Reihe voll ist)
-      if ((index + 1) % 5 === 0 || index === tischeListe.length - 1) {
-        tischeContainer.appendChild(aktuelleReihe);
-        aktuelleReihe = document.createElement("div");
-        aktuelleReihe.className = "tisch-reihe";
-      }
-    });
-  }
-}
-
-function createTischElement(tisch) {
-  const tischBox = document.createElement("div");
-  tischBox.className = "tisch-box";
-  tischBox.dataset.tischId = tisch.id || "";
-
-  const inhalt = document.createElement("div");
-  inhalt.className = "tisch-inhalt";
-
-  const linksDiv = document.createElement("div");
-  linksDiv.className = "seite links";
-  (tisch.links || tisch.gaesteLinks || []).forEach(g => linksDiv.appendChild(createPlatzElement(g)));
-
-  const labelDiv = document.createElement("div");
-  labelDiv.className = "tisch-label";
-  labelDiv.innerText = tisch.label || `Tisch ${tisch.id || ""}`;
-
-  const rechtsDiv = document.createElement("div");
-  rechtsDiv.className = "seite rechts";
-  (tisch.rechts || tisch.gaesteRechts || []).forEach(g => rechtsDiv.appendChild(createPlatzElement(g)));
-
-  inhalt.appendChild(linksDiv);
-  inhalt.appendChild(labelDiv);
-  inhalt.appendChild(rechtsDiv);
-
-  tischBox.appendChild(inhalt);
-  return tischBox;
-}
-
-function createPlatzElement(gast) {
-  const platz = document.createElement("div");
-  platz.className = "platz";
-  const name = typeof gast === "string" ? gast : (gast.name || "");
-  const sitz = gast.sitz || "";
-  const istKind = gast.kind ? '<span class="kind-star">★</span>' : "";
-
-  platz.innerHTML = `
-    <span class="platz-nr">${sitz}</span>
-    <span class="platz-name">${name}</span>
-    ${istKind}
+  braut.innerHTML = `
+    <div class="braut-reihe">
+      ${brautOben.map(g => renderPlatzHtml(g)).join("")}
+    </div>
+    <div class="braut-platte">
+      <span class="tisch-tag">TISCH 1</span>
+      <span>👸 🤴 Brauttisch</span>
+      <span class="tisch-tag">TISCH 2</span>
+    </div>
+    <div class="braut-reihe">
+      ${brautUnten.map(g => renderPlatzHtml(g)).join("")}
+    </div>
   `;
-  return platz;
-}
 
-// --- Event Listener für Suche ---
-function initSearchEvents() {
-  const searchInput = document.getElementById("guest-search") || document.querySelector("input[type='text']");
-  if (searchInput) {
-    searchInput.addEventListener("keypress", (e) => {
-      if (e.key === "Enter") {
-        starteSuche();
+  // 2. Tisch-Reihen laut Grundriss
+  const reihenLayout = [
+    [3, 4, 5, 6, 7],               // Reihe 1
+    [8, 9, 10, 11, 12, "buffet"],  // Reihe 2 (inkl. Buffet-Box rechts)
+    [13, 14, 15, 16],              // Reihe 3
+    [17, 18, 19, 20]               // Reihe 4
+  ];
+
+  reihenLayout.forEach(reihe => {
+    const reiheDiv = document.createElement("div");
+    reiheDiv.className = "tisch-reihe";
+
+    reihe.forEach(item => {
+      if (item === "buffet") {
+        const buffetBox = document.createElement("div");
+        buffetBox.className = "buffet-box";
+        buffetBox.innerHTML = `<span>➔<br>Ausschank &amp; Buffet</span>`;
+        reiheDiv.appendChild(buffetBox);
+      } else {
+        const tischNr = item;
+        const box = document.createElement("div");
+        box.className = "tisch-box";
+        box.dataset.tisch = tischNr;
+
+        const tischGaeste = gaeste.filter(g => String(g.tisch) === String(tischNr));
+        tischGaeste.sort((a, b) => Number(a.platz) - Number(b.platz));
+
+        const links = tischGaeste.filter((_, idx) => idx % 2 === 0);
+        const rechts = tischGaeste.filter((_, idx) => idx % 2 !== 0);
+
+        box.innerHTML = `
+          <div class="tisch-inhalt">
+            <div class="seite">${links.map(g => renderPlatzHtml(g)).join("")}</div>
+            <div class="tisch-label">${tischNr}</div>
+            <div class="seite">${rechts.map(g => renderPlatzHtml(g)).join("")}</div>
+          </div>
+        `;
+        reiheDiv.appendChild(box);
       }
     });
-  }
+
+    tischeContainer.appendChild(reiheDiv);
+  });
 }
 
-// --- Mehrfach-Suchlogik ---
-function starteSuche() {
-  const input = document.getElementById("guest-search") || document.querySelector("input[type='text']");
-  if (!input) return;
+function renderPlatzHtml(g) {
+  return `
+    <div class="platz" data-name="${g.name.toLowerCase()}" data-platz="${g.platz}">
+      <span class="platz-nr">${g.platz}</span>
+      <span class="platz-name">${g.name}</span>
+      ${g.isKind ? '<span class="kind-star">⭐</span>' : ''}
+    </div>
+  `;
+}
 
-  const suchbegriff = input.value.trim().toLowerCase();
-  if (!suchbegriff) return;
+// ----------------------------
+// Sprache
+// ----------------------------
+function sprich(text) {
+  if (soundMode === "off" || !("speechSynthesis" in window)) return;
+  window.speechSynthesis.cancel();
 
-  const allePlaetze = document.querySelectorAll(".platz");
-  const treffer = [];
+  const s = new SpeechSynthesisUtterance(text);
+  s.lang = "de-DE";
+  s.rate = 1;
+  s.pitch = 1.1;
+  s.volume = 1;
 
-  allePlaetze.forEach((platz) => {
-    const nameEl = platz.querySelector(".platz-name") || platz;
-    const gastName = nameEl.innerText || nameEl.textContent;
+  window.speechSynthesis.speak(s);
+}
 
-    if (gastName && gastName.toLowerCase().includes(suchbegriff)) {
-      const tischBox = platz.closest(".tisch-box") || platz.closest("#brauttisch");
-      const tischLabel = tischBox ? (tischBox.querySelector(".tisch-label")?.innerText || "Brauttisch") : "Unbekannt";
+// ----------------------------
+// Gast suchen (Mehrfach-Treffer unterstützt)
+// ----------------------------
+window.aktuellesSuchErgebnis = [];
 
-      treffer.push({
-        element: platz,
-        tisch: tischBox,
-        name: gastName.trim(),
-        tischName: tischLabel.trim()
-      });
-    }
-  });
+function sucheGast() {
+  const query = document.getElementById("search").value.trim().toLowerCase();
+  if (!query) return;
 
-  document.querySelectorAll(".highlight").forEach((el) => el.classList.remove("highlight"));
+  // ALLE passenden Gäste finden (nicht nur den ersten)
+  const treffer = gaeste.filter(g => 
+    g.name.toLowerCase().includes(query) ||
+    String(g.tisch).toLowerCase() === query ||
+    String(g.platz) === query
+  );
 
   if (treffer.length === 0) {
-    alert("Kein Gast mit diesem Namen gefunden.");
+    alert("Kein passender Gast oder Tisch gefunden.");
     return;
   }
 
-  zeigSaalplan();
-
   if (treffer.length === 1) {
-    fokussiereTisch(treffer[0]);
+    fokussiereGast(treffer[0]);
   } else {
-    zeigTrefferAuswahl(treffer);
+    zeigGastAuswahlModal(treffer);
   }
 }
 
-function fokussiereTisch(trefferItem) {
-  if (!trefferItem || !trefferItem.tisch) return;
+function fokussiereGast(gast) {
+  // Views umschalten
+  document.getElementById("welcome").classList.add("hidden");
+  document.getElementById("overlay").classList.remove("hidden");
+  document.getElementById("neueSucheBtn").classList.remove("hidden");
 
-  const tisch = trefferItem.tisch;
+  // Highlights zurücksetzen
+  document.querySelectorAll(".highlight").forEach(t => t.classList.remove("highlight"));
 
-  tisch.classList.add("highlight");
-  tisch.scrollIntoView({ behavior: "smooth", block: "center", inline: "center" });
+  // Ziel-Element ermitteln
+  let zielElement = null;
+  if (String(gast.tisch).toLowerCase() === "braut") {
+    zielElement = document.getElementById("brauttisch");
+  } else {
+    zielElement = document.querySelector(`.tisch-box[data-tisch="${gast.tisch}"]`);
+  }
 
-  setTimeout(() => {
-    tisch.classList.remove("highlight");
-  }, 4000);
+  if (zielElement) {
+    zielElement.classList.add("highlight");
+    zielElement.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
+  // Benachrichtigung anzeigen
+  const speech = document.getElementById("speech");
+  const spruecheList = (typeof CONFIG !== "undefined" && CONFIG.sprueche) ? CONFIG.sprueche : [
+    "🎉 Heey! Da bist du ja!",
+    "🥳 Jackpot! Dein Tisch wartet!",
+    "🍾 Jetzt wird gefeiert!"
+  ];
+
+  if (speech) {
+    speech.innerHTML = `
+      <h2>${spruecheList[Math.floor(Math.random() * spruecheList.length)]}</h2>
+      <p>Willkommen <b>${gast.name}</b>!<br>Tisch ${gast.tisch} (Platz ${gast.platz})</p>
+    `;
+    speech.classList.remove("hidden");
+
+    setTimeout(() => {
+      speech.classList.add("hidden");
+    }, 5000);
+  }
+
+  if (typeof confetti === "function") {
+    confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+  }
+
+  if (soundMode === "fun") {
+    sprich(`Hallo ${gast.name}! Du sitzt an Tisch ${gast.tisch}. Viel Spaß auf der Hochzeit!`);
+  }
+
+  const audio = document.getElementById("ding");
+  if (audio) {
+    audio.currentTime = 0;
+    audio.play().catch(() => {});
+  }
 }
 
-function zeigTrefferAuswahl(trefferListe) {
+// Modal für mehrere Treffer
+function zeigGastAuswahlModal(trefferListe) {
   window.aktuellesSuchErgebnis = trefferListe;
 
   let modalHtml = `
     <div id="search-modal" class="modal">
-      <div class="glass-card" style="max-width: 420px; width: 90%;">
-        <div class="modal-header">
-          <h3 style="font-family: 'Cormorant Garamond', serif; font-size: 22px; margin: 0;">Mehrere Gäste gefunden</h3>
-          <span class="close-btn" onclick="schliesseSearchModal()">&times;</span>
+      <div class="glass-card" style="max-width: 400px; width: 90%; margin: auto; padding: 20px; background: rgba(255,255,255,0.95); border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <h3 style="margin: 0; font-size: 20px; color: #333;">Mehrere Gäste gefunden</h3>
+          <span style="cursor: pointer; font-size: 24px; line-height: 1;" onclick="schliesseSearchModal()">&times;</span>
         </div>
-        <p style="font-size: 13px; color: #666; margin: 10px 0 15px 0;">Bitte wähle deinen Namen aus:</p>
-        <div style="display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow-y: auto;">
+        <p style="font-size: 14px; color: #666; margin-bottom: 15px;">Bitte wähle deinen Namen aus:</p>
+        <div style="display: flex; flex-direction: column; gap: 8px; max-height: 250px; overflow-y: auto;">
   `;
 
-  trefferListe.forEach((item, index) => {
+  trefferListe.forEach((gast, index) => {
+    const tischLabel = String(gast.tisch).toLowerCase() === "braut" ? "Brauttisch" : `Tisch ${gast.tisch}`;
     modalHtml += `
-      <button class="btn-secondary" style="text-align: left; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; width: 100%;" 
+      <button style="text-align: left; padding: 12px 15px; background: #f5f5f7; border: 1px solid #ddd; border-radius: 10px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 15px;" 
               onclick="waehleGastAus(${index})">
-        <span><strong>${item.name}</strong></span>
-        <span style="font-size: 11px; opacity: 0.8; background: rgba(0,0,0,0.06); padding: 3px 8px; border-radius: 6px;">${item.tischName}</span>
+        <span><strong>${gast.name}</strong></span>
+        <span style="font-size: 12px; opacity: 0.7; background: #e0e0e0; padding: 3px 8px; border-radius: 6px;">${tischLabel}</span>
       </button>
     `;
   });
@@ -219,30 +290,14 @@ function zeigTrefferAuswahl(trefferListe) {
 }
 
 function waehleGastAus(index) {
-  const ziel = window.aktuellesSuchErgebnis[index];
+  const zielGast = window.aktuellesSuchErgebnis[index];
   schliesseSearchModal();
-  if (ziel) {
-    fokussiereTisch(ziel);
+  if (zielGast) {
+    fokussiereGast(zielGast);
   }
 }
 
 function schliesseSearchModal() {
   const modal = document.getElementById("search-modal");
   if (modal) modal.remove();
-}
-
-function zeigSaalplan() {
-  const welcome = document.getElementById("welcome");
-  const overlay = document.getElementById("overlay");
-
-  if (welcome) welcome.classList.add("hidden");
-  if (overlay) overlay.classList.remove("hidden");
-}
-
-function zeigWelcome() {
-  const welcome = document.getElementById("welcome");
-  const overlay = document.getElementById("overlay");
-
-  if (welcome) welcome.classList.remove("hidden");
-  if (overlay) overlay.classList.add("hidden");
 }
