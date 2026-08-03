@@ -203,13 +203,13 @@ button:hover {
 
 .tisch-reihe {
   display: flex;
-  justify-content: center; /* Zentriert die Reihe symmetrisch */
-  align-items: center;
+  justify-content: space-between;
+  align-items: stretch;
   width: 100%;
-  gap: 12px;
+  gap: 10px;
 }
 
-/* FIX: Garantiert EXAKT identische feste Maße für JEDEN Tisch */
+/* FIX: Sauberes Verhalten ohne Überlappungen */
 .tisch-box {
   background: var(--table-bg);
   border-radius: 14px;
@@ -217,11 +217,9 @@ button:hover {
   border: 1px solid var(--border-subtle);
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
   
-  /* Absolute Fixierung aller Tische auf identische Abmessungen */
-  width: 185px !important;
-  min-width: 185px !important;
-  max-width: 185px !important;
-  height: 160px !important;
+  flex: 1 1 0px;       /* Verteilt den Platz in der Reihe exakt gleichmäßig */
+  min-width: 0;        /* Verhindert Overflow/Quetschen in Flexbox */
+  height: 160px;       /* Garantiert exakt gleiche Höhe für alle Tische */
   
   box-sizing: border-box;
   display: flex;
@@ -262,7 +260,7 @@ button:hover {
   display: flex;
   align-items: center;
   gap: 2px;
-  font-size: 9px;
+  font-size: 8.5px;
   color: #3f3f3f;
   background: #fcfbf9;
   padding: 2px 3px;
@@ -294,7 +292,7 @@ button:hover {
   flex-shrink: 0;
 }
 
-/* FIX: Buffet-Box exakt wie die Tische dimensioniert */
+/* Buffet-Box exakt wie die Tische dimensioniert */
 .buffet-box {
   background: #fdfaf3;
   border: 1px dashed var(--gold-primary);
@@ -309,10 +307,9 @@ button:hover {
   align-items: center;
   justify-content: center;
   
-  width: 185px !important;
-  min-width: 185px !important;
-  max-width: 185px !important;
-  height: 160px !important;
+  flex: 1 1 0px;
+  min-width: 0;
+  height: 160px;
   box-sizing: border-box;
 }
 
