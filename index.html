@@ -1,0 +1,1494 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hochzeit Anja & Dino – Sitzplan & KI-Gästefinder</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- SheetJS for Excel Import/Export -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,700;1,600&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            gold: {
+              50: '#fbf8ee',
+              100: '#f5edd3',
+              200: '#ebd9a8',
+              300: '#dfbe75',
+              400: '#d4a248',
+              500: '#c5882a',
+              600: '#aa6a21',
+              700: '#874f1e',
+              800: '#70401f',
+              900: '#5c351e',
+            },
+            creme: '#FAF7F2',
+          },
+          fontFamily: {
+            serif: ['Cormorant Garamond', 'serif'],
+            sans: ['Montserrat', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #FAF7F2;
+      color: #332d29;
+      font-family: 'Montserrat', sans-serif;
+      overflow-x: hidden;
+    }
+    
+    .font-serif-title {
+      font-family: 'Cormorant Garamond', serif;
+    }
+
+    /* Canvas Confetti & Glitter Overlay */
+    #confetti-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* Pulsing Gold Table Highlight */
+    @keyframes pulseGold {
+      0% { box-shadow: 0 0 0 0 rgba(212, 162, 72, 0.8); transform: scale(1); }
+      50% { box-shadow: 0 0 25px 10px rgba(212, 162, 72, 0.9); transform: scale(1.02); }
+      100% { box-shadow: 0 0 0 0 rgba(212, 162, 72, 0); transform: scale(1); }
+    }
+
+    .highlight-table {
+      animation: pulseGold 1.5s infinite ease-in-out;
+      border-color: #d4a248 !important;
+      background-color: #fdf6e7 !important;
+      z-index: 20;
+    }
+
+    .highlight-seat {
+      background-color: #d4a248 !important;
+      color: #ffffff !important;
+      font-weight: bold;
+      transform: scale(1.1);
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(197, 136, 42, 0.5);
+    }
+
+    /* Uniform Table Card Dimensions */
+    .table-card {
+      min-height: 235px;
+      display: flex;
+      flex-direction: column;
+      justify-content: start;
+    }
+
+    /* Desktop Admin Button visibility */
+    .desktop-only-admin {
+      display: none;
+    }
+    @media (min-width: 1024px) {
+      .desktop-only-admin {
+        display: inline-flex;
+      }
+    }
+
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #FAF7F2;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #dfbe75;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col relative">
+
+  <!-- Confetti / Glitter Canvas -->
+  <canvas id="confetti-canvas"></canvas>
+
+  <header class="bg-white/90 backdrop-blur-md sticky top-0 z-40 border-b border-gold-200 shadow-xs">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-full bg-gold-100 border border-gold-300 flex items-center justify-center text-gold-700 font-serif-title font-bold text-xl shadow-xs">
+          A&D
+        </div>
+        <div>
+          <h1 class="font-serif-title text-xl md:text-2xl font-bold text-gold-900 tracking-wide">Anja & Dino</h1>
+          <p class="text-[11px] text-gray-500 uppercase tracking-widest">Hochzeit • Sitzplan & KI-Guide</p>
+        </div>
+      </div>
+
+      <!-- Header Action Controls -->
+      <div class="flex items-center space-x-2">
+        <button id="btn-show-all" onclick="scrollToFloorplan()" class="px-3.5 py-1.5 rounded-full text-xs md:text-sm font-medium bg-gold-50 text-gold-800 border border-gold-300 hover:bg-gold-100 transition shadow-xs flex items-center gap-1.5">
+          <i class="fa-solid fa-map"></i>
+          <span>Gesamtübersicht</span>
+        </button>
+
+        <button onclick="openAIBotModal()" class="px-3.5 py-1.5 rounded-full text-xs md:text-sm font-medium bg-gradient-to-r from-gold-500 to-gold-600 text-white hover:opacity-90 transition shadow-xs flex items-center gap-1.5">
+          <i class="fa-solid fa-robot"></i>
+          <span class="hidden sm:inline">Hochzeits-KI</span>
+        </button>
+
+        <!-- Desktop Admin Trigger -->
+        <button id="btn-admin-trigger" onclick="openAdminModal()" class="desktop-only-admin px-3.5 py-1.5 rounded-full text-xs md:text-sm font-medium bg-gray-900 text-gold-300 hover:bg-gray-800 transition shadow-xs items-center gap-1.5">
+          <i class="fa-solid fa-lock"></i>
+          <span>Admin-Konsole</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-grow max-w-7xl w-full mx-auto px-4 py-6 space-y-8">
+
+    <!-- SEARCH & WELCOME SECTION -->
+    <section class="max-w-2xl mx-auto text-center space-y-4">
+      <div class="space-y-1">
+        <span class="text-gold-600 uppercase text-xs tracking-widest font-semibold">Herzlich Willkommen</span>
+        <h2 class="font-serif-title text-3xl md:text-4xl text-gray-900 font-bold">Finde deinen Sitzplatz</h2>
+        <p class="text-sm text-gray-600">Gib einfach deinen Vornamen ein, um deinen Tisch zu finden.</p>
+      </div>
+
+      <!-- Interactive Search Input -->
+      <div class="relative max-w-md mx-auto">
+        <div class="relative">
+          <input type="text" id="guest-search-input" oninput="handleSearchInput(this.value)" placeholder="z. B. Max, Melanie, Felix..." class="w-full pl-11 pr-10 py-3.5 rounded-2xl border-2 border-gold-300 focus:border-gold-500 focus:ring-4 focus:ring-gold-100 outline-none text-gray-800 font-medium placeholder-gray-400 bg-white shadow-md text-base transition">
+          <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gold-500 text-lg"></i>
+          <button id="clear-search-btn" onclick="clearSearch()" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1">
+            <i class="fa-solid fa-circle-xmark"></i>
+          </button>
+        </div>
+
+        <!-- Dropdown Suggestions -->
+        <div id="search-results-dropdown" class="hidden absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-2xl border border-gold-200 divide-y divide-gray-100 max-h-60 overflow-y-auto z-30 text-left"></div>
+      </div>
+
+      <!-- Found Guest Card -->
+      <div id="found-guest-card" class="hidden bg-white border border-gold-300 rounded-3xl p-5 shadow-xl max-w-md mx-auto transition-all transform text-left relative overflow-hidden space-y-4">
+        <div class="absolute -right-6 -bottom-6 text-gold-100 opacity-40 text-8xl pointer-events-none">
+          <i class="fa-solid fa-glass-cheers"></i>
+        </div>
+        
+        <div class="flex items-start justify-between relative z-10">
+          <div>
+            <span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gold-100 text-gold-800 mb-1">Sitzplatz gefunden!</span>
+            <h3 id="found-guest-name" class="font-serif-title text-2xl font-bold text-gray-900">...</h3>
+            <p id="found-guest-table" class="text-gold-700 font-bold text-lg mt-0.5">...</p>
+          </div>
+          <button onclick="triggerAISpeechForCurrentGuest()" class="bg-gold-500 hover:bg-gold-600 text-white rounded-full p-3.5 shadow-md transition flex items-center justify-center gap-2" title="Begrüßung erneut abspielen">
+            <i class="fa-solid fa-volume-high text-lg"></i>
+          </button>
+        </div>
+        
+        <!-- AI Features Toolbar -->
+        <div class="pt-3 border-t border-gray-100 space-y-3 relative z-10">
+          <div class="flex flex-wrap gap-2">
+            <button onclick="generateAIIcebreaker('funny')" class="text-xs bg-gold-50 hover:bg-gold-100 text-gold-800 border border-gold-300 px-3 py-1.5 rounded-full font-medium transition flex items-center gap-1.5">
+              <i class="fa-solid fa-laugh text-gold-600"></i> Lustiger Spruch
+            </button>
+            <button onclick="generateAIIcebreaker('heartfelt')" class="text-xs bg-gold-50 hover:bg-gold-100 text-gold-800 border border-gold-300 px-3 py-1.5 rounded-full font-medium transition flex items-center gap-1.5">
+              <i class="fa-solid fa-heart text-red-500"></i> Herzlicher Toast
+            </button>
+            <button onclick="generateAIIcebreaker('poem')" class="text-xs bg-gold-50 hover:bg-gold-100 text-gold-800 border border-gold-300 px-3 py-1.5 rounded-full font-medium transition flex items-center gap-1.5">
+              <i class="fa-solid fa-feather text-gold-600"></i> Reim
+            </button>
+            <button onclick="generateAITableQuiz()" class="text-xs bg-purple-50 hover:bg-purple-100 text-purple-800 border border-purple-200 px-3 py-1.5 rounded-full font-medium transition flex items-center gap-1.5">
+              <i class="fa-solid fa-puzzle-piece text-purple-600"></i> Tisch-Quiz
+            </button>
+            <button onclick="generateAISouvenirCard()" class="text-xs bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 px-3 py-1.5 rounded-full font-medium transition flex items-center gap-1.5">
+              <i class="fa-solid fa-image text-amber-600"></i> KI-Karte
+            </button>
+          </div>
+
+          <!-- Generated AI Toast Content Box -->
+          <div id="ai-toast-container" class="hidden bg-gold-50/90 p-3.5 rounded-2xl border border-gold-200 text-xs space-y-2">
+            <div class="flex items-center justify-between text-gold-900 font-semibold">
+              <span class="flex items-center gap-1"><i class="fa-solid fa-wand-magic-sparkles text-gold-600"></i> KI-Hochzeitsbotschaft</span>
+              <button id="ai-toast-audio-btn" onclick="playAIToastAudio()" class="hidden text-gold-700 hover:text-gold-900 font-bold flex items-center gap-1">
+                <i class="fa-solid fa-play"></i> Anhören
+              </button>
+            </div>
+            <p id="ai-toast-text" class="italic text-gray-700 leading-relaxed">...</p>
+          </div>
+
+          <!-- Generated AI Souvenir Card Container -->
+          <div id="ai-souvenir-container" class="hidden bg-amber-50/90 p-3.5 rounded-2xl border border-amber-200 space-y-2 text-center">
+            <span class="text-xs font-bold text-amber-900 flex items-center justify-center gap-1">
+              <i class="fa-solid fa-palette text-amber-600"></i> Deine KI-Erinnerungskarte
+            </span>
+            <div id="souvenir-img-wrapper" class="relative min-h-[160px] flex items-center justify-center bg-white rounded-xl overflow-hidden border border-amber-200 shadow-inner">
+              <span class="text-xs text-amber-700 animate-pulse">Generiere Kunstwerk mit Imagen 4...</span>
+            </div>
+          </div>
+
+          <!-- Generated AI Quiz Modal Container -->
+          <div id="ai-quiz-container" class="hidden bg-purple-50/90 p-3.5 rounded-2xl border border-purple-200 space-y-3">
+            <div class="flex items-center justify-between border-b border-purple-200 pb-1.5">
+              <span class="text-xs font-bold text-purple-900 flex items-center gap-1">
+                <i class="fa-solid fa-circle-question text-purple-600"></i> Tisch-Quiz für Anja & Dino
+              </span>
+              <span id="quiz-score" class="text-[10px] font-bold bg-purple-200 text-purple-800 px-2 py-0.5 rounded-full">Frage 1/3</span>
+            </div>
+            <p id="quiz-question" class="text-xs font-semibold text-purple-950">...</p>
+            <div id="quiz-options" class="space-y-1.5"></div>
+            <p id="quiz-feedback" class="hidden text-xs font-bold text-purple-700 pt-1"></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FLOORPLAN SECTION -->
+    <section id="floorplan-section" class="space-y-4">
+      <div class="flex items-center justify-between border-b border-gold-200 pb-3">
+        <div>
+          <h3 class="font-serif-title text-2xl font-bold text-gray-800">Saalplan & Tischordnung</h3>
+          <p class="text-xs text-gray-500">Tische 1 bis 20 • Festsaal Layout mit linken & rechten Sitzplatzspalten</p>
+        </div>
+        <div class="text-xs text-gold-800 bg-gold-100 px-3 py-1 rounded-full font-medium flex items-center gap-1">
+          <i class="fa-solid fa-location-dot text-gold-600"></i> Festsaal Anja & Dino
+        </div>
+      </div>
+
+      <!-- FLOORPLAN CONTAINER (Matches original floorplan sketch with equal table sizes & 2 columns) -->
+      <div class="overflow-x-auto pb-6 pt-2">
+        <div id="hall-plan" class="min-w-[1050px] bg-creme/90 rounded-3xl p-6 border border-gold-300 shadow-xl space-y-6 relative font-sans">
+          
+          <!-- TOP: BRAUTTISCH (Tables 1 & 2) -->
+          <div class="w-full flex justify-center">
+            <div id="table-brauttisch" class="relative bg-white border-2 border-gold-400 rounded-2xl p-4 shadow-md text-center max-w-2xl w-full transition-all">
+              <div class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-gold-500 text-white text-xs font-bold px-4 py-1 rounded-full shadow-sm uppercase tracking-wider">
+                👑 Brauttisch (Anja & Dino)
+              </div>
+              
+              <!-- Top Row Seats (1 - 8) -->
+              <div class="flex justify-around items-center mb-3 pt-2">
+                <div id="seats-brauttisch-top" class="flex justify-around w-full gap-1"></div>
+              </div>
+
+              <!-- Center Brauttisch Banner -->
+              <div class="py-2.5 bg-gold-100/70 rounded-xl border border-gold-200 flex items-center justify-center gap-6">
+                <span class="text-xs font-bold text-gold-800 bg-white px-2 py-0.5 rounded border border-gold-300">Tisch 1</span>
+                <span class="font-serif-title font-bold text-xl text-gold-900">✨ Braut-Tisch ✨</span>
+                <span class="text-xs font-bold text-gold-800 bg-white px-2 py-0.5 rounded border border-gold-300">Tisch 2</span>
+              </div>
+
+              <!-- Bottom Row Seats (9 - 14) -->
+              <div class="flex justify-around items-center mt-3">
+                <div id="seats-brauttisch-bottom" class="flex justify-around w-full gap-1"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ROW 1: TABLES 3, 4, 5, 6, 7 (5 Tables equal size) -->
+          <div class="grid grid-cols-5 gap-4 items-stretch">
+            <div id="table-card-3" class="table-card border-2 border-gold-300 rounded-2xl p-3 bg-white shadow-xs hover:shadow-md transition"></div>
+            <div id="table-card-4" class="table-card border-2 border-gold-300 rounded-2xl p-3 bg-white shadow-xs hover:shadow-md transition"></div>
+            <div id="table-card-5" class="table-card border-2 border-gold-300 rounded-2xl p-3 bg-white shadow-xs hover:shadow-md transition"></div>
+            <div id="table-card-6" class="table-card border-2 border-gold-300 rounded-2xl p-3 bg-white shadow-xs hover:shadow-md transition"></div>
+            <div id="table-card-7" class="table-card border-2 border-gold-300 rounded-2xl p-3 bg-white shadow-xs hover:shadow-md transition"></div>
+          </div>
+
+          <!-- ROW 2: TABLES 8, 9, 10, 11, 12 + AUSSCHANK & BUFFET ON THE RIGHT -->
+          <div class="grid grid-cols-6 gap-3 items-stretch">
+            <div id="table-card-8" class="col-span-1 table-card border-2 border-gold-300 rounded-2xl p-3 bg-white shadow-xs hover:shadow-md transition"></div>
+            <div id="table-card-9" class="col-span-1 table-card border-2 border-gold-300 rounded-2xl p-3 bg-white shadow-xs hover:shadow-md transition"></div>
+            <div id="table-card-10" class="col-span-1 table-card border-2 border-gold-300 rounded-2xl p-3 bg-white shadow-xs hover:shadow-md transition"></div>
+            <div id="table-card-11" class="col-span-1 table-card border-2 border-gold-300 rounded-2xl p-3 bg-white shadow-xs hover:shadow-md transition"></div>
+            <div id="table-card-12" class="col-span-1 table-card border-2 border-gold-300 rounded-2xl p-3 bg-white shadow-xs hover:shadow-md transition"></div>
+            
+            <!-- Ausschank & Buffet Box right next to Table 12 -->
+            <div class="col-span-1 table-card border-2 border-gold-300 rounded-2xl p-3 bg-gradient-to-br from-gold-100 via-white to-gold-50 text-gold-900 flex flex-col items-center justify-center text-center shadow-md">
+              <i class="fa-solid fa-wine-glass text-3xl text-gold-600 mb-2"></i>
+              <span class="font-serif-title font-bold text-base leading-tight text-gold-900">Ausschank & Buffet</span>
+              <div class="flex items-center gap-1 mt-2 text-gold-700 font-bold text-xs bg-white/90 px-3 py-1 rounded-full border border-gold-200 shadow-2xs">
+                <span>➡️ Buffet</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- ROW 3: TABLES 13, 14, 15, 16 -->
+          <div class="grid grid-cols-5 gap-3 items-stretch">
+            <div id="table-card-13" class="col-span-1 table-card border-2 border-gold-300 rounded-2xl p-3 bg-white shadow-xs hover:shadow-md transition"></div>
+            <div id="table-card-14" class="col-span-1 table-card border-2 border-gold-300 rounded-2xl p-3 bg-white shadow-xs hover:shadow-md transition"></div>
+            <div id="table-card-15" class="col-span-1 table-card border-2 border-gold-300 rounded-2xl p-3 bg-white shadow-xs hover:shadow-md transition"></div>
+            <div id="table-card-16" class="col-span-1 table-card border-2 border-gold-300 rounded-2xl p-3 bg-white shadow-xs hover:shadow-md transition"></div>
+            <div class="col-span-1"></div> <!-- Spacer for symmetry -->
+          </div>
+
+          <!-- ROW 4: TABLES 17, 18, 19, 20 -->
+          <div class="grid grid-cols-5 gap-3 items-stretch">
+            <div id="table-card-17" class="col-span-1 table-card border-2 border-gold-300 rounded-2xl p-3 bg-white shadow-xs hover:shadow-md transition"></div>
+            <div id="table-card-18" class="col-span-1 table-card border-2 border-gold-300 rounded-2xl p-3 bg-white shadow-xs hover:shadow-md transition"></div>
+            <div id="table-card-19" class="col-span-1 table-card border-2 border-gold-300 rounded-2xl p-3 bg-white shadow-xs hover:shadow-md transition"></div>
+            <div id="table-card-20" class="col-span-1 table-card border-2 border-gold-300 rounded-2xl p-3 bg-white shadow-xs hover:shadow-md transition"></div>
+            <div class="col-span-1"></div> <!-- Spacer for symmetry -->
+          </div>
+
+          <!-- BOTTOM: ENTRANCE DOOR & DJ / DANCEFLOOR -->
+          <div class="pt-4 border-t border-gold-200 grid grid-cols-5 gap-4 items-center">
+            <div class="col-span-1 bg-white border-2 border-gray-300 rounded-2xl py-3.5 px-2 text-center text-xs font-bold text-gray-700 shadow-xs flex items-center justify-center gap-2">
+              <i class="fa-solid fa-door-open text-lg text-gray-500"></i>
+              <span>Eingangs-Tür</span>
+            </div>
+            <div class="col-span-4 bg-gradient-to-r from-gold-100 via-white to-gold-100 border-2 border-gold-300 rounded-2xl py-3.5 text-center text-sm font-bold text-gold-900 shadow-xs flex items-center justify-center gap-3">
+              <i class="fa-solid fa-compact-disc text-gold-600 animate-spin text-lg" style="animation-duration: 8s;"></i>
+              <span class="font-serif-title text-lg tracking-wider">🎶 DJ & Tanzfläche 🎶</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Disambiguation Modal for Duplicate Names -->
+  <div id="disambiguation-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-gold-300">
+      <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+        <h3 class="font-serif-title text-2xl font-bold text-gray-800">Mehrere Gäste gefunden</h3>
+        <button onclick="closeDisambiguationModal()" class="text-gray-400 hover:text-gray-600">
+          <i class="fa-solid fa-xmark text-xl"></i>
+        </button>
+      </div>
+      <p class="text-sm text-gray-600">Bitte wähle deinen Namen aus der Liste aus:</p>
+      <div id="disambiguation-list" class="space-y-2 max-h-60 overflow-y-auto pr-1"></div>
+    </div>
+  </div>
+
+  <!-- AI Wedding Host Bot Modal -->
+  <div id="ai-bot-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-5 shadow-2xl space-y-4 border border-gold-300 flex flex-col max-h-[85vh]">
+      <div class="flex items-center justify-between border-b border-gold-200 pb-3">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-full bg-gold-100 border border-gold-300 flex items-center justify-center text-gold-600 text-lg">
+            <i class="fa-solid fa-robot"></i>
+          </div>
+          <div>
+            <h3 class="font-serif-title text-xl font-bold text-gray-800">Virtueller Hochzeits-Moderator</h3>
+            <p class="text-xs text-gold-700">Frage alles rund um Anja & Dino's Hochzeit</p>
+          </div>
+        </div>
+        <button onclick="closeAIBotModal()" class="text-gray-400 hover:text-gray-600 text-lg">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div id="ai-chat-history" class="flex-grow overflow-y-auto space-y-3 p-2 text-xs">
+        <div class="bg-gold-50 p-3 rounded-2xl border border-gold-200 text-gray-800">
+          👋 Hallo! Ich bin der KI-Hochzeitsguide von Anja & Dino. Frag mich gerne nach Ablauf, Buffet oder Informationen zu den Tischen!
+        </div>
+      </div>
+
+      <div class="flex flex-wrap gap-1.5 pt-1">
+        <button onclick="askAIBotQuick('Wie ist der Ablauf heute?')" class="text-[11px] bg-gray-100 hover:bg-gold-100 text-gray-700 px-2.5 py-1 rounded-full transition">⏰ Ablauf?</button>
+        <button onclick="askAIBotQuick('Wo ist das Buffet und die Tanzfläche?')" class="text-[11px] bg-gray-100 hover:bg-gold-100 text-gray-700 px-2.5 py-1 rounded-full transition">🍽️ Buffet & Tanzfläche?</button>
+        <button onclick="askAIBotQuick('Erzähl mir etwas schönes über Anja und Dino!')" class="text-[11px] bg-gray-100 hover:bg-gold-100 text-gray-700 px-2.5 py-1 rounded-full transition">❤️ Brautpaar-Info</button>
+      </div>
+
+      <div class="flex items-center gap-2 pt-2 border-t border-gray-100">
+        <input type="text" id="ai-chat-input" placeholder="Stelle eine Frage..." onkeypress="if(event.key==='Enter') sendAIBotMessage()" class="flex-grow px-3.5 py-2 rounded-xl border border-gold-300 focus:ring-2 focus:ring-gold-400 outline-none text-xs">
+        <button onclick="sendAIBotMessage()" class="bg-gold-500 hover:bg-gold-600 text-white font-bold px-4 py-2 rounded-xl text-xs shadow transition">
+          Senden
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Desktop-Only Admin Modal -->
+  <div id="admin-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-4xl w-full p-6 shadow-2xl space-y-6 border border-gold-400 max-h-[90vh] flex flex-col">
+      
+      <div class="flex items-center justify-between border-b border-gray-200 pb-4">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-full bg-gray-900 text-gold-400 flex items-center justify-center text-lg">
+            <i class="fa-solid fa-user-gear"></i>
+          </div>
+          <div>
+            <h3 class="font-serif-title text-2xl font-bold text-gray-900">Admin-Konsole (Sitzplatzverwaltung)</h3>
+            <p class="text-xs text-gray-500">Ausschließlich auf Desktop-Geräten verfügbar</p>
+          </div>
+        </div>
+        <button onclick="closeAdminModal()" class="text-gray-400 hover:text-gray-600 text-xl">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Password Screen -->
+      <div id="admin-auth-screen" class="space-y-4 py-8 text-center max-w-sm mx-auto">
+        <i class="fa-solid fa-lock text-4xl text-gold-500"></i>
+        <h4 class="font-bold text-lg text-gray-800">Passwort erforderlich</h4>
+        <input type="password" id="admin-password-input" placeholder="Admin-Passwort eingeben" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-gold-400 outline-none text-center font-mono">
+        <button onclick="verifyAdminPassword()" class="w-full bg-gold-600 hover:bg-gold-700 text-white font-bold py-2.5 rounded-xl shadow transition">
+          Anmelden
+        </button>
+        <p id="admin-auth-error" class="hidden text-xs text-red-500 font-semibold">Falsches Passwort!</p>
+      </div>
+
+      <!-- Admin Panel Content -->
+      <div id="admin-panel-content" class="hidden space-y-6 overflow-y-auto flex-grow pr-2">
+        
+        <div class="bg-gold-50 p-4 rounded-2xl border border-gold-200 flex flex-wrap items-center justify-between gap-4">
+          <div class="flex items-center space-x-3">
+            <label class="bg-green-600 hover:bg-green-700 text-white text-xs font-bold px-4 py-2 rounded-xl cursor-pointer shadow transition flex items-center gap-2">
+              <i class="fa-solid fa-file-excel"></i>
+              <span>Excel importieren (.xlsx)</span>
+              <input type="file" id="excel-file-input" accept=".xlsx, .xls, .csv" onchange="handleExcelUpload(event)" class="hidden">
+            </label>
+            <button onclick="exportToExcel()" class="bg-gray-800 hover:bg-gray-900 text-white text-xs font-bold px-4 py-2 rounded-xl shadow transition flex items-center gap-2">
+              <i class="fa-solid fa-download"></i>
+              <span>Excel exportieren</span>
+            </button>
+          </div>
+
+          <button onclick="resetGuestListToDefault()" class="text-xs text-red-600 hover:text-red-800 underline font-semibold">
+            Auf Original-Liste zurücksetzen
+          </button>
+        </div>
+
+        <!-- Add Guest Form -->
+        <div class="bg-white border border-gray-200 p-4 rounded-2xl shadow-xs space-y-3">
+          <h4 class="font-bold text-sm text-gray-800 flex items-center gap-2">
+            <i class="fa-solid fa-user-plus text-gold-600"></i> Neuen Gast hinzufügen
+          </h4>
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+            <input type="text" id="add-guest-name" placeholder="Name des Gastes" class="px-3 py-2 border rounded-xl text-sm outline-none focus:ring-2 focus:ring-gold-300">
+            <select id="add-guest-table" class="px-3 py-2 border rounded-xl text-sm outline-none focus:ring-2 focus:ring-gold-300">
+              <option value="1">Brauttisch (Tisch 1/2)</option>
+              <option value="3">Tisch 3</option>
+              <option value="4">Tisch 4</option>
+              <option value="5">Tisch 5</option>
+              <option value="6">Tisch 6</option>
+              <option value="7">Tisch 7</option>
+              <option value="8">Tisch 8</option>
+              <option value="9">Tisch 9</option>
+              <option value="10">Tisch 10</option>
+              <option value="11">Tisch 11</option>
+              <option value="12">Tisch 12</option>
+              <option value="13">Tisch 13</option>
+              <option value="14">Tisch 14</option>
+              <option value="15">Tisch 15</option>
+              <option value="16">Tisch 16</option>
+              <option value="17">Tisch 17</option>
+              <option value="18">Tisch 18</option>
+              <option value="19">Tisch 19</option>
+              <option value="20">Tisch 20</option>
+            </select>
+            <input type="number" id="add-guest-seat" placeholder="Sitzplatz-Nr. (1-153)" min="1" max="153" class="px-3 py-2 border rounded-xl text-sm outline-none focus:ring-2 focus:ring-gold-300">
+            <button onclick="addNewGuestFromAdmin()" class="bg-gold-600 hover:bg-gold-700 text-white font-bold text-xs py-2 rounded-xl transition shadow">
+              Hinzufügen
+            </button>
+          </div>
+        </div>
+
+        <!-- Editable Table Overview -->
+        <div class="space-y-4">
+          <h4 class="font-bold text-sm text-gray-800">Aktuelle Sitzplatz-Zuordnung (1–153)</h4>
+          <div id="admin-guest-table-container" class="border rounded-2xl overflow-hidden divide-y divide-gray-100 max-h-80 overflow-y-auto text-sm"></div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // Complete guest list parsed from provided Excel
+    const INITIAL_GUEST_DATA = [
+      // Brauttisch (1-14)
+      { id: 1, name: "Anne", table: 1, seat: 1 },
+      { id: 2, name: "Felix", table: 1, seat: 2 },
+      { id: 3, name: "Dino", table: 1, seat: 3 },
+      { id: 4, name: "Anja", table: 1, seat: 4 },
+      { id: 5, name: "Toni", table: 1, seat: 5 },
+      { id: 6, name: "Vito", table: 1, seat: 6 },
+      { id: 7, name: "Dani", table: 1, seat: 7 },
+      { id: 8, name: "Frei", table: 1, seat: 8 },
+      { id: 9, name: "Günther", table: 1, seat: 9 },
+      { id: 10, name: "Erika", table: 1, seat: 10 },
+      { id: 11, name: "Brigitte", table: 1, seat: 11 },
+      { id: 12, name: "Peter", table: 1, seat: 12 },
+      { id: 13, name: "Ingrid", table: 1, seat: 13 },
+      { id: 14, name: "Roswitha", table: 1, seat: 14 },
+
+      // Tisch 3
+      { id: 15, name: "Heike", table: 3, seat: 15 },
+      { id: 16, name: "Michael", table: 3, seat: 16 },
+      { id: 17, name: "Flo", table: 3, seat: 17 },
+      { id: 18, name: "Jutta", table: 3, seat: 18 },
+      { id: 19, name: "Christian", table: 3, seat: 19 },
+      { id: 20, name: "Malika", table: 3, seat: 20 },
+
+      // Tisch 4
+      { id: 21, name: "Luca", table: 4, seat: 21 },
+      { id: 22, name: "Sebastian", table: 4, seat: 22 },
+      { id: 23, name: "Melissa", table: 4, seat: 23 },
+      { id: 24, name: "Gusti", table: 4, seat: 24 },
+      { id: 25, name: "Celina", table: 4, seat: 25 },
+      { id: 26, name: "Noah", table: 4, seat: 26 },
+
+      // Tisch 5
+      { id: 27, name: "Cosetta", table: 5, seat: 27 },
+      { id: 28, name: "Beppo", table: 5, seat: 28 },
+      { id: 29, name: "Giovanni", table: 5, seat: 29 },
+      { id: 30, name: "Laura", table: 5, seat: 30 },
+      { id: 31, name: "Patrick", table: 5, seat: 31 },
+      { id: 32, name: "Diana", table: 5, seat: 32 },
+      { id: 33, name: "Nadja", table: 5, seat: 33 },
+
+      // Tisch 6
+      { id: 34, name: "Gino", table: 6, seat: 34 },
+      { id: 35, name: "Enzo", table: 6, seat: 35 },
+      { id: 36, name: "Pauline", table: 6, seat: 36 },
+      { id: 37, name: "Luca", table: 6, seat: 37 },
+      { id: 38, name: "Timo", table: 6, seat: 38 },
+      { id: 39, name: "Julia", table: 6, seat: 39 },
+
+      // Tisch 7
+      { id: 40, name: "Sven", table: 7, seat: 40 },
+      { id: 41, name: "Phil", table: 7, seat: 41 },
+      { id: 42, name: "Samuel", table: 7, seat: 42 },
+      { id: 43, name: "Lars", table: 7, seat: 43 },
+      { id: 44, name: "Melanie", table: 7, seat: 44 },
+      { id: 45, name: "Michelle", table: 7, seat: 45 },
+
+      // Tisch 8
+      { id: 46, name: "Max", table: 8, seat: 46 },
+      { id: 47, name: "Caro", table: 8, seat: 47 },
+      { id: 48, name: "Flo", table: 8, seat: 48 },
+      { id: 49, name: "Eva", table: 8, seat: 49 },
+      { id: 50, name: "Alisa", table: 8, seat: 50 },
+
+      // Tisch 9
+      { id: 61, name: "Jenny", table: 9, seat: 61 },
+      { id: 62, name: "Alex", table: 9, seat: 62 },
+      { id: 63, name: "Elio", table: 9, seat: 63 },
+      { id: 64, name: "Toni", table: 9, seat: 64 },
+      { id: 65, name: "Vanessa", table: 9, seat: 65 },
+
+      // Tisch 10
+      { id: 66, name: "Max", table: 10, seat: 66 },
+      { id: 67, name: "Theo", table: 10, seat: 67 },
+      { id: 68, name: "Eva", table: 10, seat: 68 },
+      { id: 69, name: "Matze", table: 10, seat: 69 },
+      { id: 70, name: "Fred", table: 10, seat: 70 },
+      { id: 71, name: "Matti", table: 10, seat: 71 },
+
+      // Tisch 11
+      { id: 72, name: "Katrin", table: 11, seat: 72 },
+      { id: 73, name: "Rob", table: 11, seat: 73 },
+      { id: 74, name: "Jule", table: 11, seat: 74 },
+      { id: 75, name: "Dominique", table: 11, seat: 75 },
+      { id: 76, name: "Christoph", table: 11, seat: 76 },
+      { id: 77, name: "Fabi", table: 11, seat: 77 },
+      { id: 78, name: "Juri", table: 11, seat: 78 },
+      { id: 79, name: "Alba", table: 11, seat: 79 },
+
+      // Tisch 12
+      { id: 82, name: "Patrick", table: 12, seat: 82 },
+      { id: 83, name: "Charlotte", table: 12, seat: 83 },
+      { id: 84, name: "Mathilde", table: 12, seat: 84 },
+      { id: 85, name: "Tom", table: 12, seat: 85 },
+      { id: 86, name: "Frauke", table: 12, seat: 86 },
+
+      // Tisch 13
+      { id: 91, name: "Ines", table: 13, seat: 91 },
+      { id: 92, name: "Jonas", table: 13, seat: 92 },
+
+      // Tisch 14
+      { id: 93, name: "Mira", table: 14, seat: 93 },
+      { id: 94, name: "Fabian", table: 14, seat: 94 },
+      { id: 95, name: "Julia", table: 14, seat: 95 },
+      { id: 96, name: "Sebastian", table: 14, seat: 96 },
+      { id: 97, name: "Matteo", table: 14, seat: 97 },
+      { id: 98, name: "Melanie", table: 14, seat: 98 },
+
+      // Tisch 15
+      { id: 99, name: "Dani", table: 15, seat: 99 },
+      { id: 100, name: "Marco", table: 15, seat: 100 },
+      { id: 101, name: "Marina", table: 15, seat: 101 },
+      { id: 102, name: "Michael", table: 15, seat: 102 },
+      { id: 103, name: "Miriam", table: 15, seat: 103 },
+      { id: 104, name: "Flo", table: 15, seat: 104 },
+      { id: 105, name: "Philipp", table: 15, seat: 105 },
+      { id: 106, name: "Marcel", table: 15, seat: 106 },
+
+      // Tisch 16
+      { id: 107, name: "Nele", table: 16, seat: 107 },
+      { id: 108, name: "Elena", table: 16, seat: 108 },
+      { id: 109, name: "Sebastian", table: 16, seat: 109 },
+      { id: 110, name: "Marie", table: 16, seat: 110 },
+      { id: 111, name: "Jo", table: 16, seat: 111 },
+
+      // Tisch 17
+      { id: 112, name: "Sandra", table: 17, seat: 112 },
+      { id: 113, name: "Georg", table: 17, seat: 113 },
+      { id: 118, name: "Jonah", table: 17, seat: 118 },
+      { id: 119, name: "Lou", table: 17, seat: 119 },
+
+      // Tisch 18
+      { id: 128, name: "Liv", table: 18, seat: 128 },
+      { id: 129, name: "Fabi", table: 18, seat: 129 },
+      { id: 130, name: "Linus", table: 18, seat: 130 },
+
+      // Tisch 19
+      { id: 137, name: "Rainer", table: 19, seat: 137 },
+      { id: 138, name: "Verena", table: 19, seat: 138 },
+      { id: 139, name: "Caro", table: 19, seat: 139 },
+      { id: 140, name: "Phillip", table: 19, seat: 140 },
+
+      // Tisch 20
+      { id: 144, name: "Jonas", table: 20, seat: 144 },
+      { id: 145, name: "Anton", table: 20, seat: 145 },
+      { id: 146, name: "Clara", table: 20, seat: 146 },
+      { id: 147, name: "Frauke", table: 20, seat: 147 },
+      { id: 148, name: "Stefan", table: 20, seat: 148 },
+      { id: 149, name: "Sophia", table: 20, seat: 149 },
+      { id: 152, name: "Chrissi", table: 20, seat: 152 },
+      { id: 153, name: "David", table: 20, seat: 153 }
+    ];
+
+    let guestList = [];
+    let activeFoundGuest = null;
+    let currentToastAudioUrl = null;
+    let currentQuizData = null;
+    let currentQuizIndex = 0;
+
+    function initGuestData() {
+      const stored = localStorage.getItem('wedding_guests_v2');
+      if (stored) {
+        try { guestList = JSON.parse(stored); } catch (e) { guestList = [...INITIAL_GUEST_DATA]; }
+      } else {
+        guestList = [...INITIAL_GUEST_DATA];
+      }
+    }
+
+    function saveGuestData() {
+      localStorage.setItem('wedding_guests_v2', JSON.stringify(guestList));
+    }
+
+    let confettiParticles = [];
+    const canvas = document.getElementById('confetti-canvas');
+    const ctx = canvas.getContext('2d');
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function triggerConfettiAndGlitter() {
+      confettiParticles = [];
+      const colors = ['#d4a248', '#dfbe75', '#ffffff', '#c5882a', '#f5edd3', '#ffd700'];
+      
+      for (let i = 0; i < 150; i++) {
+        confettiParticles.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height * 0.4 - canvas.height * 0.2,
+          size: Math.random() * 8 + 4,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          vx: (Math.random() - 0.5) * 6,
+          vy: Math.random() * 4 + 2,
+          rotation: Math.random() * 360,
+          rotationSpeed: (Math.random() - 0.5) * 10,
+          opacity: 1,
+        });
+      }
+      requestAnimationFrame(updateAndDrawConfetti);
+    }
+
+    function updateAndDrawConfetti() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      let activeCount = 0;
+
+      confettiParticles.forEach((p) => {
+        if (p.opacity > 0) {
+          activeCount++;
+          p.x += p.vx;
+          p.y += p.vy;
+          p.rotation += p.rotationSpeed;
+          p.opacity -= 0.008;
+
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate((p.rotation * Math.PI) / 180);
+          ctx.globalAlpha = Math.max(0, p.opacity);
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+          ctx.restore();
+        }
+      });
+
+      if (activeCount > 0) {
+        requestAnimationFrame(updateAndDrawConfetti);
+      } else {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    }
+
+    function playCelebrationChime() {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const now = ctx.currentTime;
+        const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+        
+        notes.forEach((freq, index) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now + index * 0.12);
+          
+          gain.gain.setValueAtTime(0, now + index * 0.12);
+          gain.gain.linearRampToValueAtTime(0.2, now + index * 0.12 + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + index * 0.12 + 0.6);
+          
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          
+          osc.start(now + index * 0.12);
+          osc.stop(now + index * 0.12 + 0.65);
+        });
+      } catch (e) {
+        console.warn("Audio chime prevented by browser policy", e);
+      }
+    }
+
+    function detectGender(name) {
+      const femaleSuffixes = ['a', 'e', 'i', 'in', 'ette', 'ie'];
+      const lowercase = name.toLowerCase().trim();
+      const knownFemales = ['anne', 'anja', 'erika', 'brigitte', 'roswitha', 'ingrid', 'heike', 'jutta', 'malika', 'melissa', 'celina', 'cosetta', 'laura', 'diana', 'nadja', 'pauline', 'julia', 'melanie', 'michelle', 'caro', 'eva', 'alisa', 'jenny', 'vanessa', 'katrin', 'jule', 'dominique', 'frauke', 'ines', 'mira', 'marina', 'miriam', 'nele', 'elena', 'marie', 'sandra', 'lou', 'liv', 'verena', 'clara', 'sophia', 'chrissi'];
+      
+      if (knownFemales.includes(lowercase)) return 'female';
+      if (femaleSuffixes.some(s => lowercase.endsWith(s))) return 'female';
+      return 'male';
+    }
+
+    async function speakWelcomeGreeting(guest) {
+      const gender = detectGender(guest.name);
+      const voiceName = gender === 'female' ? 'Aoede' : 'Puck';
+      const tableName = guest.table === 1 ? 'am Brauttisch' : `an Tisch ${guest.table}`;
+      
+      // EXCLUDES seat numbers as requested
+      const greetingText = `Hallo ${guest.name}! Herzlich willkommen auf der Hochzeit von Anja und Dino! Du sitzt ${tableName}. Wir wünschen dir ein wundervolles Fest!`;
+
+      try {
+        const apiKey = "";
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
+        
+        const payload = {
+          contents: [{
+            parts: [{ text: greetingText }]
+          }],
+          generationConfig: {
+            responseModalities: ["AUDIO"],
+            speechConfig: {
+              voiceConfig: {
+                prebuiltVoiceConfig: { voiceName: voiceName }
+              }
+            }
+          },
+          model: "gemini-2.5-flash-preview-tts"
+        };
+
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+        const part = result?.candidates?.[0]?.content?.parts?.[0];
+        
+        if (part?.inlineData?.data) {
+          const sampleRate = parseInt(part.inlineData.mimeType.match(/rate=(\d+)/)?.[1] || "24000", 10);
+          const pcmBuffer = base64ToArrayBuffer(part.inlineData.data);
+          const wavBlob = pcmToWav(new Int16Array(pcmBuffer), sampleRate);
+          const audioUrl = URL.createObjectURL(wavBlob);
+          const audio = new Audio(audioUrl);
+          audio.play();
+        } else {
+          fallbackSpeechSynthesis(greetingText);
+        }
+      } catch (err) {
+        fallbackSpeechSynthesis(greetingText);
+      }
+    }
+
+    function fallbackSpeechSynthesis(text) {
+      if ('speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'de-DE';
+        window.speechSynthesis.speak(utterance);
+      }
+    }
+
+    function base64ToArrayBuffer(base64) {
+      const binaryString = window.atob(base64);
+      const len = binaryString.length;
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      return bytes.buffer;
+    }
+
+    function pcmToWav(pcmData, sampleRate) {
+      const buffer = new ArrayBuffer(44 + pcmData.length * 2);
+      const view = new DataView(buffer);
+
+      function writeString(offset, string) {
+        for (let i = 0; i < string.length; i++) {
+          view.setUint8(offset + i, string.charCodeAt(i));
+        }
+      }
+
+      writeString(0, 'RIFF');
+      view.setUint32(4, 36 + pcmData.length * 2, true);
+      writeString(8, 'WAVE');
+      writeString(12, 'fmt ');
+      view.setUint32(16, 16, true);
+      view.setUint16(20, 1, true);
+      view.setUint16(22, 1, true);
+      view.setUint32(24, sampleRate, true);
+      view.setUint32(28, sampleRate * 2, true);
+      view.setUint16(32, 2, true);
+      view.setUint16(34, 16, true);
+      writeString(36, 'data');
+      view.setUint32(40, pcmData.length * 2, true);
+
+      let offset = 44;
+      for (let i = 0; i < pcmData.length; i++, offset += 2) {
+        view.setInt16(offset, pcmData[i], true);
+      }
+      return new Blob([buffer], { type: 'audio/wav' });
+    }
+
+    function renderFloorplan() {
+      const topSeatsContainer = document.getElementById('seats-brauttisch-top');
+      const bottomSeatsContainer = document.getElementById('seats-brauttisch-bottom');
+      topSeatsContainer.innerHTML = '';
+      bottomSeatsContainer.innerHTML = '';
+
+      const brautGuests = guestList.filter(g => g.table === 1);
+
+      // Top Row (Seats 1-8)
+      for (let seatNum = 1; seatNum <= 8; seatNum++) {
+        const guest = brautGuests.find(g => g.seat === seatNum);
+        topSeatsContainer.appendChild(createSeatBadge(seatNum, guest));
+      }
+      // Bottom Row (Seats 9-14)
+      for (let seatNum = 9; seatNum <= 14; seatNum++) {
+        const guest = brautGuests.find(g => g.seat === seatNum);
+        bottomSeatsContainer.appendChild(createSeatBadge(seatNum, guest));
+      }
+
+      // Render Tables 3 to 20 with LEFT and RIGHT columns matching original sketch layout
+      for (let tableNum = 3; tableNum <= 20; tableNum++) {
+        const card = document.getElementById(`table-card-${tableNum}`);
+        if (!card) continue;
+
+        const tableGuests = guestList.filter(g => g.table === tableNum);
+        
+        // Split guests into left side and right side
+        const half = Math.ceil(tableGuests.length / 2);
+        const leftGuests = tableGuests.slice(0, half);
+        const rightGuests = tableGuests.slice(half);
+
+        card.innerHTML = `
+          <div class="flex items-center justify-between border-b border-gold-200 pb-1.5 mb-2">
+            <span class="font-serif-title font-bold text-sm text-gold-900">Tisch ${tableNum}</span>
+            <span class="text-[10px] text-gray-500 font-medium bg-gold-50 px-2 py-0.5 rounded-full border border-gold-200">${tableGuests.length} Gäste</span>
+          </div>
+          
+          <!-- 2-Column Side-by-Side Layout (Left & Right) -->
+          <div class="grid grid-cols-2 gap-2 flex-grow content-start">
+            <!-- Left Side Seats -->
+            <div class="space-y-1.5 border-r border-gray-100 pr-1">
+              ${leftGuests.map(g => `
+                <div id="seat-node-${g.seat}" class="flex items-center justify-between text-xs py-1 px-1.5 rounded-lg bg-gray-50/80 hover:bg-gold-100 transition border border-gray-100">
+                  <span class="font-medium text-gray-800 truncate max-w-[55px]" title="${g.name}">${g.name}</span>
+                  <span class="text-[9px] font-mono text-gold-800 bg-white px-1 rounded border border-gold-200 font-bold">#${g.seat}</span>
+                </div>
+              `).join('')}
+            </div>
+
+            <!-- Right Side Seats -->
+            <div class="space-y-1.5 pl-1">
+              ${rightGuests.map(g => `
+                <div id="seat-node-${g.seat}" class="flex items-center justify-between text-xs py-1 px-1.5 rounded-lg bg-gray-50/80 hover:bg-gold-100 transition border border-gray-100">
+                  <span class="font-medium text-gray-800 truncate max-w-[55px]" title="${g.name}">${g.name}</span>
+                  <span class="text-[9px] font-mono text-gold-800 bg-white px-1 rounded border border-gold-200 font-bold">#${g.seat}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    function createSeatBadge(seatNum, guest) {
+      const div = document.createElement('div');
+      div.id = `seat-node-${seatNum}`;
+      div.className = "flex flex-col items-center justify-center p-1 rounded-xl text-center min-w-[50px] border border-gold-200 bg-white shadow-2xs hover:shadow-xs transition";
+      
+      div.innerHTML = `
+        <span class="text-[9px] text-gold-600 font-bold">#${seatNum}</span>
+        <span class="text-xs font-semibold text-gray-800 truncate max-w-[55px]">${guest ? guest.name : '—'}</span>
+      `;
+      return div;
+    }
+
+    function handleSearchInput(query) {
+      const dropdown = document.getElementById('search-results-dropdown');
+      const clearBtn = document.getElementById('clear-search-btn');
+      const clean = query.trim().toLowerCase();
+
+      if (!clean) {
+        dropdown.classList.add('hidden');
+        clearBtn.classList.add('hidden');
+        return;
+      }
+      clearBtn.classList.remove('hidden');
+
+      const matches = guestList.filter(g => g.name.toLowerCase().includes(clean));
+
+      if (matches.length === 0) {
+        dropdown.innerHTML = `<div class="p-3 text-xs text-gray-500 text-center">Kein Gast mit diesem Namen gefunden.</div>`;
+        dropdown.classList.remove('hidden');
+        return;
+      }
+
+      dropdown.innerHTML = matches.map(g => `
+        <div onclick="selectGuestDirectly(${g.id})" class="p-3 hover:bg-gold-50 cursor-pointer flex items-center justify-between transition">
+          <div>
+            <span class="font-semibold text-sm text-gray-800">${g.name}</span>
+            <span class="text-xs text-gray-500 block">${g.table === 1 ? 'Brauttisch' : 'Tisch ' + g.table}</span>
+          </div>
+          <i class="fa-solid fa-chevron-right text-xs text-gold-400"></i>
+        </div>
+      `).join('');
+      
+      dropdown.classList.remove('hidden');
+
+      const exactMatches = matches.filter(g => g.name.toLowerCase() === clean);
+      if (exactMatches.length > 1) {
+        openDisambiguationModal(exactMatches);
+      }
+    }
+
+    function clearSearch() {
+      document.getElementById('guest-search-input').value = '';
+      document.getElementById('search-results-dropdown').classList.add('hidden');
+      document.getElementById('clear-search-btn').classList.add('hidden');
+      document.getElementById('found-guest-card').classList.add('hidden');
+      clearHighlights();
+    }
+
+    function openDisambiguationModal(matches) {
+      const list = document.getElementById('disambiguation-list');
+      list.innerHTML = matches.map(g => `
+        <button onclick="selectGuestFromModal(${g.id})" class="w-full text-left p-3 rounded-xl border border-gold-200 hover:border-gold-500 hover:bg-gold-50 transition flex items-center justify-between">
+          <div>
+            <span class="font-bold text-gray-800 block">${g.name}</span>
+            <span class="text-xs text-gold-700">${g.table === 1 ? 'Brauttisch' : 'Tisch ' + g.table}</span>
+          </div>
+          <i class="fa-solid fa-arrow-right text-gold-500"></i>
+        </button>
+      `).join('');
+
+      document.getElementById('disambiguation-modal').classList.remove('hidden');
+    }
+
+    function closeDisambiguationModal() {
+      document.getElementById('disambiguation-modal').classList.add('hidden');
+    }
+
+    function selectGuestFromModal(guestId) {
+      closeDisambiguationModal();
+      selectGuestDirectly(guestId);
+    }
+
+    function selectGuestDirectly(guestId) {
+      const guest = guestList.find(g => g.id === guestId);
+      if (!guest) return;
+
+      activeFoundGuest = guest;
+      document.getElementById('search-results-dropdown').classList.add('hidden');
+      document.getElementById('guest-search-input').value = guest.name;
+
+      // Reset AI UI components
+      document.getElementById('ai-toast-container').classList.add('hidden');
+      document.getElementById('ai-souvenir-container').classList.add('hidden');
+      document.getElementById('ai-quiz-container').classList.add('hidden');
+
+      // Update Card
+      const card = document.getElementById('found-guest-card');
+      document.getElementById('found-guest-name').innerText = guest.name;
+      document.getElementById('found-guest-table').innerText = guest.table === 1 ? "Brauttisch (Tisch 1/2)" : `Tisch ${guest.table}`;
+      card.classList.remove('hidden');
+
+      // Visual & Audio Feedback
+      triggerConfettiAndGlitter();
+      playCelebrationChime();
+      speakWelcomeGreeting(guest);
+      highlightTableAndSeat(guest.table, guest.seat);
+    }
+
+    function highlightTableAndSeat(tableNum, seatNum) {
+      clearHighlights();
+
+      const tableElem = tableNum === 1 ? document.getElementById('table-brauttisch') : document.getElementById(`table-card-${tableNum}`);
+      if (tableElem) {
+        tableElem.classList.add('highlight-table');
+        tableElem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+
+      const seatNode = document.getElementById(`seat-node-${seatNum}`);
+      if (seatNode) {
+        seatNode.classList.add('highlight-seat');
+      }
+    }
+
+    function clearHighlights() {
+      document.querySelectorAll('.highlight-table').forEach(el => el.classList.remove('highlight-table'));
+      document.querySelectorAll('.highlight-seat').forEach(el => el.classList.remove('highlight-seat'));
+    }
+
+    function scrollToFloorplan() {
+      document.getElementById('floorplan-section').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function triggerAISpeechForCurrentGuest() {
+      if (activeFoundGuest) {
+        speakWelcomeGreeting(activeFoundGuest);
+      }
+    }
+
+    async function generateAIIcebreaker(style = 'funny') {
+      if (!activeFoundGuest) return;
+      const toastContainer = document.getElementById('ai-toast-container');
+      const toastText = document.getElementById('ai-toast-text');
+      const audioBtn = document.getElementById('ai-toast-audio-btn');
+
+      toastContainer.classList.remove('hidden');
+      audioBtn.classList.add('hidden');
+      toastText.innerText = "Erstelle KI-Hochzeitstoast mit Gemini...";
+
+      const stylePrompts = {
+        funny: "Schreibe einen lustigen, sympathischen 2-Satz Hochzeits-Toast auf Deutsch",
+        heartfelt: "Schreibe einen warmherzigen, romantischen 2-Satz Hochzeits-Toast auf Deutsch",
+        poem: "Schreibe ein kurzes, elegantes 4-zeiliges Hochzeitsgedicht auf Deutsch"
+      };
+
+      const prompt = `${stylePrompts[style]} für den Gast ${activeFoundGuest.name}, der an ${activeFoundGuest.table === 1 ? 'dem Brauttisch' : 'Tisch ' + activeFoundGuest.table} sitzt. Feiere die Hochzeit von Anja und Dino.`;
+
+      try {
+        const apiKey = "";
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+        });
+
+        const data = await response.json();
+        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        toastText.innerText = text || "Auf Anja und Dino! Auf ein wundervolles Fest voller Liebe und Freude!";
+        
+        prepareToastAudio(toastText.innerText);
+      } catch (e) {
+        toastText.innerText = "Schön, dass du da bist! Auf ein unvergessliches Fest mit Anja und Dino!";
+      }
+    }
+
+    async function prepareToastAudio(text) {
+      const audioBtn = document.getElementById('ai-toast-audio-btn');
+      try {
+        const apiKey = "";
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
+        
+        const payload = {
+          contents: [{ parts: [{ text: text }] }],
+          generationConfig: {
+            responseModalities: ["AUDIO"],
+            speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: "Aoede" } } }
+          },
+          model: "gemini-2.5-flash-preview-tts"
+        };
+
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+        const part = result?.candidates?.[0]?.content?.parts?.[0];
+        if (part?.inlineData?.data) {
+          const sampleRate = parseInt(part.inlineData.mimeType.match(/rate=(\d+)/)?.[1] || "24000", 10);
+          const pcmBuffer = base64ToArrayBuffer(part.inlineData.data);
+          const wavBlob = pcmToWav(new Int16Array(pcmBuffer), sampleRate);
+          currentToastAudioUrl = URL.createObjectURL(wavBlob);
+          audioBtn.classList.remove('hidden');
+        }
+      } catch (err) {
+        console.warn("Could not prepare TTS audio for toast", err);
+      }
+    }
+
+    function playAIToastAudio() {
+      if (currentToastAudioUrl) {
+        const audio = new Audio(currentToastAudioUrl);
+        audio.play();
+      }
+    }
+
+    async function generateAISouvenirCard() {
+      if (!activeFoundGuest) return;
+      const container = document.getElementById('ai-souvenir-container');
+      const wrapper = document.getElementById('souvenir-img-wrapper');
+      
+      container.classList.remove('hidden');
+      wrapper.innerHTML = `<div class="p-6 text-center space-y-2"><i class="fa-solid fa-spinner animate-spin text-amber-600 text-2xl"></i><p class="text-xs text-amber-800 font-medium">Kreiere deine persönliche KI-Erinnerungskarte...</p></div>`;
+
+      const prompt = `A beautiful, elegant wedding souvenir card with gold glitter frames, white roses, elegant calligraphy saying 'Anja & Dino Wedding', personalized for guest ${activeFoundGuest.name}, sitting at Table ${activeFoundGuest.table}, high resolution, 8k, romantic lighting`;
+
+      try {
+        const apiKey = "";
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`;
+        
+        const payload = {
+          instances: [{ prompt: prompt }],
+          parameters: { sampleCount: 1 }
+        };
+
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+        const base64Data = result?.predictions?.[0]?.bytesBase64Encoded;
+
+        if (base64Data) {
+          const imgUrl = `data:image/png;base64,${base64Data}`;
+          wrapper.innerHTML = `
+            <div class="space-y-2 p-2">
+              <img src="${imgUrl}" alt="Hochzeits-Erinnerungskarte" class="w-full h-auto rounded-lg shadow-md border border-amber-300">
+              <a href="${imgUrl}" download="Erinnerung_Anja_Dino_${activeFoundGuest.name}.png" class="inline-block text-[11px] bg-amber-600 text-white font-bold px-3 py-1.5 rounded-full hover:bg-amber-700 transition shadow">
+                <i class="fa-solid fa-download"></i> Karte Herunterladen
+              </a>
+            </div>
+          `;
+        } else {
+          wrapper.innerHTML = `<p class="text-xs text-red-500 p-4">Karte konnte nicht erstellt werden.</p>`;
+        }
+      } catch (err) {
+        wrapper.innerHTML = `<p class="text-xs text-red-500 p-4">Fehler bei der Kartenerstellung.</p>`;
+      }
+    }
+
+    async function generateAITableQuiz() {
+      if (!activeFoundGuest) return;
+      const container = document.getElementById('ai-quiz-container');
+      const questionEl = document.getElementById('quiz-question');
+      const optionsEl = document.getElementById('quiz-options');
+      const feedbackEl = document.getElementById('quiz-feedback');
+      
+      container.classList.remove('hidden');
+      feedbackEl.classList.add('hidden');
+      questionEl.innerText = "Lade Tischtrivia mit KI...";
+      optionsEl.innerHTML = '';
+
+      const prompt = `Erstelle 3 unterhaltsame Multiple-Choice Quizfragen (auf Deutsch) über Hochzeitstraditionen, Liebe und das Brautpaar Anja und Dino für Gäste an Tisch ${activeFoundGuest.table}.`;
+
+      try {
+        const apiKey = "";
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+        const payload = {
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: "ARRAY",
+              items: {
+                type: "OBJECT",
+                properties: {
+                  question: { type: "STRING" },
+                  options: { type: "ARRAY", items: { type: "STRING" } },
+                  correctIndex: { type: "INTEGER" },
+                  explanation: { type: "STRING" }
+                },
+                propertyOrdering: ["question", "options", "correctIndex", "explanation"]
+              }
+            }
+          }
+        };
+
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+        const jsonText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+        
+        if (jsonText) {
+          currentQuizData = JSON.parse(jsonText);
+          currentQuizIndex = 0;
+          renderQuizQuestion();
+        }
+      } catch (e) {
+        questionEl.innerText = "Quiz konnte nicht geladen werden.";
+      }
+    }
+
+    function renderQuizQuestion() {
+      if (!currentQuizData || currentQuizIndex >= currentQuizData.length) return;
+      const q = currentQuizData[currentQuizIndex];
+      
+      document.getElementById('quiz-score').innerText = `Frage ${currentQuizIndex + 1}/${currentQuizData.length}`;
+      document.getElementById('quiz-question').innerText = q.question;
+      
+      const optionsEl = document.getElementById('quiz-options');
+      const feedbackEl = document.getElementById('quiz-feedback');
+      feedbackEl.classList.add('hidden');
+
+      optionsEl.innerHTML = q.options.map((opt, idx) => `
+        <button onclick="answerQuizQuestion(${idx})" class="w-full text-left p-2 rounded-xl bg-white border border-purple-200 hover:border-purple-400 text-xs font-medium text-purple-900 transition flex items-center justify-between">
+          <span>${opt}</span>
+          <i class="fa-solid fa-circle-chevron-right text-purple-400"></i>
+        </button>
+      `).join('');
+    }
+
+    function answerQuizQuestion(selectedIdx) {
+      const q = currentQuizData[currentQuizIndex];
+      const feedbackEl = document.getElementById('quiz-feedback');
+      
+      if (selectedIdx === q.correctIndex) {
+        feedbackEl.innerHTML = `✅ Richtig! ${q.explanation}`;
+        feedbackEl.className = "text-xs font-bold text-green-700 pt-1";
+      } else {
+        feedbackEl.innerHTML = `❌ Leider falsch! Richtig war: ${q.options[q.correctIndex]}. ${q.explanation}`;
+        feedbackEl.className = "text-xs font-bold text-red-600 pt-1";
+      }
+      feedbackEl.classList.remove('hidden');
+
+      setTimeout(() => {
+        currentQuizIndex++;
+        if (currentQuizIndex < currentQuizData.length) {
+          renderQuizQuestion();
+        } else {
+          document.getElementById('quiz-question').innerText = "🎉 Quiz abgeschlossen! Schönen Abend an deinem Tisch!";
+          document.getElementById('quiz-options').innerHTML = '';
+        }
+      }, 3000);
+    }
+
+    function openAIBotModal() {
+      document.getElementById('ai-bot-modal').classList.remove('hidden');
+    }
+
+    function closeAIBotModal() {
+      document.getElementById('ai-bot-modal').classList.add('hidden');
+    }
+
+    function askAIBotQuick(text) {
+      document.getElementById('ai-chat-input').value = text;
+      sendAIBotMessage();
+    }
+
+    async function sendAIBotMessage() {
+      const inputEl = document.getElementById('ai-chat-input');
+      const historyEl = document.getElementById('ai-chat-history');
+      const userText = inputEl.value.trim();
+      if (!userText) return;
+
+      inputEl.value = '';
+      
+      historyEl.innerHTML += `<div class="bg-gold-500 text-white p-2.5 rounded-2xl ml-auto max-w-[80%] text-right font-medium">${userText}</div>`;
+      historyEl.scrollTop = historyEl.scrollHeight;
+
+      const loaderId = 'bot-loader-' + Date.now();
+      historyEl.innerHTML += `<div id="${loaderId}" class="bg-gray-100 p-2.5 rounded-2xl max-w-[80%] text-gray-500 italic"><i class="fa-solid fa-circle-notch animate-spin"></i> Antworten...</div>`;
+      historyEl.scrollTop = historyEl.scrollHeight;
+
+      const systemPrompt = "Du bist der freundliche, charmante KI-Hochzeitsguide von Anja und Dino. Beantworte Fragen von Hochzeitsgästen präzise, herzlich und kurz (max. 3 Sätze). Feiere das Brautpaar.";
+
+      try {
+        const apiKey = "";
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: userText }] }],
+            systemInstruction: { parts: [{ text: systemPrompt }] }
+          })
+        });
+
+        const data = await response.json();
+        const botReply = data?.candidates?.[0]?.content?.parts?.[0]?.text || "Ich freue mich riesig, mit euch Anja & Dino zu feiern!";
+
+        const loaderNode = document.getElementById(loaderId);
+        if (loaderNode) {
+          loaderNode.outerHTML = `<div class="bg-gold-50 p-3 rounded-2xl border border-gold-200 text-gray-800 max-w-[85%]">${botReply}</div>`;
+        }
+        historyEl.scrollTop = historyEl.scrollHeight;
+      } catch (err) {
+        const loaderNode = document.getElementById(loaderId);
+        if (loaderNode) {
+          loaderNode.outerHTML = `<div class="bg-red-50 p-3 rounded-2xl border border-red-200 text-red-700 max-w-[85%]">Entschuldigung, ich konnte gerade keine Antwort abrufen.</div>`;
+        }
+      }
+    }
+
+    function openAdminModal() {
+      if (window.innerWidth < 1024) {
+        return;
+      }
+      document.getElementById('admin-modal').classList.remove('hidden');
+    }
+
+    function closeAdminModal() {
+      document.getElementById('admin-modal').classList.add('hidden');
+    }
+
+    function verifyAdminPassword() {
+      const pwd = document.getElementById('admin-password-input').value;
+      if (pwd === "wedding2026") {
+        document.getElementById('admin-auth-screen').classList.add('hidden');
+        document.getElementById('admin-panel-content').classList.remove('hidden');
+        renderAdminGuestList();
+      } else {
+        document.getElementById('admin-auth-error').classList.remove('hidden');
+      }
+    }
+
+    function renderAdminGuestList() {
+      const container = document.getElementById('admin-guest-table-container');
+      container.innerHTML = guestList.map(g => `
+        <div class="p-3 flex items-center justify-between hover:bg-gray-50 transition">
+          <div class="flex items-center space-x-3">
+            <span class="font-mono text-xs font-bold bg-gold-100 text-gold-800 px-2 py-0.5 rounded">Sitz #${g.seat}</span>
+            <span class="font-bold text-gray-800">${g.name}</span>
+            <span class="text-xs text-gray-500">(${g.table === 1 ? 'Brauttisch' : 'Tisch ' + g.table})</span>
+          </div>
+          <button onclick="deleteGuestFromAdmin(${g.id})" class="text-red-500 hover:text-red-700 text-xs font-semibold px-2 py-1 rounded hover:bg-red-50 transition">
+            Löschen
+          </button>
+        </div>
+      `).join('');
+    }
+
+    function addNewGuestFromAdmin() {
+      const name = document.getElementById('add-guest-name').value.trim();
+      const table = parseInt(document.getElementById('add-guest-table').value, 10);
+      const seat = parseInt(document.getElementById('add-guest-seat').value, 10);
+
+      if (!name || isNaN(seat)) {
+        return;
+      }
+
+      const newGuest = { id: Date.now(), name, table, seat };
+      guestList.push(newGuest);
+      saveGuestData();
+      renderGuestListAndFloorplan();
+
+      document.getElementById('add-guest-name').value = '';
+      document.getElementById('add-guest-seat').value = '';
+    }
+
+    function deleteGuestFromAdmin(id) {
+      guestList = guestList.filter(g => g.id !== id);
+      saveGuestData();
+      renderGuestListAndFloorplan();
+    }
+
+    function resetGuestListToDefault() {
+      guestList = [...INITIAL_GUEST_DATA];
+      saveGuestData();
+      renderGuestListAndFloorplan();
+    }
+
+    function renderGuestListAndFloorplan() {
+      renderAdminGuestList();
+      renderFloorplan();
+    }
+
+    function handleExcelUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        const json = XLSX.utils.sheet_to_json(worksheet);
+
+        if (json.length > 0) {
+          guestList = json.map((row, idx) => ({
+            id: Date.now() + idx,
+            name: row.Name || row.Gast || row.name || `Gast ${idx+1}`,
+            table: parseInt(row.Tisch || row.table || 1, 10),
+            seat: parseInt(row.Sitzplatz || row.seat || (idx+1), 10)
+          }));
+          saveGuestData();
+          renderGuestListAndFloorplan();
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    function exportToExcel() {
+      const exportData = guestList.map(g => ({
+        Name: g.name,
+        Tisch: g.table,
+        Sitzplatz: g.seat
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(exportData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Gästeliste");
+      XLSX.writeFile(workbook, "Hochzeit_Anja_Dino_Gaesteliste.xlsx");
+    }
+
+    window.onload = function() {
+      initGuestData();
+      renderFloorplan();
+    };
+  </script>
+</body>
+</html>
